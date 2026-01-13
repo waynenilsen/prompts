@@ -65,14 +65,38 @@ Constraints force clarity. If you can't explain it simply, you don't understand 
 
 ---
 
+## File Organization
+
+PRDs are stored in the `./prd/` directory with sequential 4-digit identifiers:
+
+```
+prd/
+├── 0001.md    # First PRD
+├── 0002.md    # Second PRD
+├── 0003.md    # Third PRD
+└── ...
+```
+
+**Naming rules:**
+- Always 4 digits, zero-padded (`0001`, not `1`)
+- Sequential, never reused
+- The filename is the canonical identifier
+- Reference in commits, PRs, and ERDs as `PRD-0001`
+
+Each PRD may have a corresponding ERD (Engineering Requirements Document) in `./erd/` with the same number.
+
+---
+
 ## The Template
 
 ### Metadata
 
 ```
+PRD: [4-digit ID]
 Title: [Feature Name]
 Author: [PM Name]
 Status: [Draft | In Review | Approved | In Progress | Shipped]
+ERD: [Link to corresponding ERD, if any]
 Last Updated: [Date]
 ```
 
