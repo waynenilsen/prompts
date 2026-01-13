@@ -67,20 +67,20 @@ Constraints force clarity. If you can't explain it simply, you don't understand 
 
 ## File Organization
 
-PRDs are stored in the `./prd/` directory with sequential 4-digit identifiers:
+PRDs are stored in the `./prd/` directory with sequential 4-digit identifiers followed by a kebab-case description:
 
 ```
 prd/
-├── 0001.md    # First PRD
-├── 0002.md    # Second PRD
-├── 0003.md    # Third PRD
+├── 0001-user-authentication.md
+├── 0002-payment-processing.md
+├── 0003-notification-system.md
 └── ...
 ```
 
 **Naming rules:**
-- Always 4 digits, zero-padded (`0001`, not `1`)
-- Sequential, never reused
-- The filename is the canonical identifier
+- 4-digit zero-padded prefix (`0001`, not `1`)
+- Followed by hyphen and kebab-case description
+- Sequential numbers, never reused
 - Reference in commits, PRs, and ERDs as `PRD-0001`
 
 Each PRD may have a corresponding ERD (Engineering Requirements Document) in `./erd/` with the same number.
