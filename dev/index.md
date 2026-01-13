@@ -10,12 +10,14 @@ Developer guides and conventions for this project.
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
 | Database | Prisma + SQLite (multi-file schema) |
+| Email | React Email + Mailhog (dev) / SendGrid (prod) |
 | Runtime | Bun |
 | Hosting | Sprite |
 
 ## Contents
 
 - [Project Setup](./setup.md) - Bootstrap projects with the full stack
+- [Email](./email.md) - React Email templates, Mailhog dev server, SendGrid production
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Frontend Architecture](./frontend.md) - Component organization, hooks, shadcn/ui patterns
 - [Engineering Requirements Document](./erd.md) - Technical specs and design docs

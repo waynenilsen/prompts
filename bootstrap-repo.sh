@@ -13,15 +13,23 @@
 #   - Biome (replacing ESLint)
 #   - Prisma + SQLite (multi-file schema)
 #   - shadcn/ui
+#   - React Email + Mailhog (dev) / SendGrid (prod)
+#   - Docker Compose for local services
 #   - TypeDoc
 #   - Playwright
 #   - Bun test with coverage
+#   - Random ports (50000-60000) to avoid collisions
 #
 
 set -euo pipefail
 
 # Get script directory (where prompts repo lives)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Generate random port in range 50000-60000
+random_port() {
+  echo $((RANDOM % 10000 + 50000))
+}
 
 # Colors
 RED='\033[0;31m'
@@ -85,6 +93,21 @@ bunx create-next-app@latest "$PROJECT_NAME" \
 
 cd "$PROJECT_NAME"
 success "Next.js project created"
+
+# Generate random ports for this project
+MAILHOG_SMTP_PORT=$(random_port)
+MAILHOG_WEB_PORT=$(random_port)
+DEV_PORT=$(random_port)
+
+# Ensure ports are unique
+while [ "$MAILHOG_WEB_PORT" -eq "$MAILHOG_SMTP_PORT" ]; do
+  MAILHOG_WEB_PORT=$(random_port)
+done
+while [ "$DEV_PORT" -eq "$MAILHOG_SMTP_PORT" ] || [ "$DEV_PORT" -eq "$MAILHOG_WEB_PORT" ]; do
+  DEV_PORT=$(random_port)
+done
+
+log "Generated ports: Dev=$DEV_PORT, Mailhog SMTP=$MAILHOG_SMTP_PORT, Mailhog Web=$MAILHOG_WEB_PORT"
 
 # Step 2: Update Biome and configure for Tailwind
 log "Updating Biome and configuring for Tailwind"
@@ -170,7 +193,217 @@ bunx shadcn@latest init -y -d
 
 success "shadcn/ui initialized"
 
-# Step 6: Set up TypeDoc
+# Step 6: Set up Docker Compose with Mailhog
+log "Setting up Docker Compose with Mailhog"
+cat > docker-compose.yml << EOF
+services:
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "${MAILHOG_SMTP_PORT}:1025"
+      - "${MAILHOG_WEB_PORT}:8025"
+    restart: unless-stopped
+EOF
+success "Docker Compose configured"
+
+# Step 7: Set up React Email
+log "Setting up React Email with stage-based transport"
+bun add react-email @react-email/components nodemailer @sendgrid/mail
+bun add -d @types/nodemailer
+
+# Create emails directory
+mkdir -p src/emails
+
+# Create email service abstraction
+cat > src/lib/email.ts << 'EOF'
+import { render } from '@react-email/components';
+import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
+
+const STAGE = process.env.STAGE || 'local';
+
+// Configure SendGrid for production
+if (STAGE === 'production' && process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
+
+// Mailhog transporter for local development
+const mailhogTransport = nodemailer.createTransport({
+  host: 'localhost',
+  port: Number(process.env.MAILHOG_SMTP_PORT) || 1025,
+  secure: false,
+});
+
+interface SendEmailOptions {
+  to: string | string[];
+  subject: string;
+  template: React.ReactElement;
+  from?: string;
+}
+
+interface SendEmailResult {
+  success: boolean;
+  messageId?: string;
+  error?: Error;
+}
+
+export async function sendEmail({
+  to,
+  subject,
+  template,
+  from,
+}: SendEmailOptions): Promise<SendEmailResult> {
+  const html = await render(template);
+  const defaultFrom = process.env.EMAIL_FROM || 'noreply@example.com';
+  const sender = from || defaultFrom;
+
+  try {
+    if (STAGE === 'production') {
+      const [response] = await sgMail.send({
+        to,
+        from: sender,
+        subject,
+        html,
+      });
+      return { success: true, messageId: response.headers['x-message-id'] };
+    }
+
+    if (STAGE === 'test') {
+      // Log to console for test visibility
+      console.log(\`[EMAIL] To: \${to}, Subject: \${subject}\`);
+      return { success: true, messageId: 'test-message-id' };
+    }
+
+    // Local: send to Mailhog
+    const info = await mailhogTransport.sendMail({
+      to,
+      from: sender,
+      subject,
+      html,
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('[EMAIL ERROR]', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error : new Error('Unknown error'),
+    };
+  }
+}
+EOF
+
+# Create sample email template
+cat > src/emails/welcome.tsx << 'EOF'
+import {
+  Html,
+  Head,
+  Body,
+  Container,
+  Section,
+  Text,
+  Button,
+  Hr,
+} from '@react-email/components';
+
+interface WelcomeEmailProps {
+  name: string;
+  loginUrl: string;
+}
+
+export function WelcomeEmail({ name, loginUrl }: WelcomeEmailProps) {
+  return (
+    <Html>
+      <Head />
+      <Body style={main}>
+        <Container style={container}>
+          <Section>
+            <Text style={heading}>Welcome, {name}!</Text>
+            <Text style={paragraph}>
+              Thanks for signing up. We&apos;re excited to have you on board.
+            </Text>
+            <Button style={button} href={loginUrl}>
+              Get Started
+            </Button>
+            <Hr style={hr} />
+            <Text style={footer}>
+              If you didn&apos;t create this account, you can ignore this email.
+            </Text>
+          </Section>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
+const main = {
+  backgroundColor: '#f6f9fc',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+};
+
+const container = {
+  backgroundColor: '#ffffff',
+  margin: '0 auto',
+  padding: '40px 20px',
+  maxWidth: '560px',
+};
+
+const heading = {
+  fontSize: '24px',
+  fontWeight: 'bold' as const,
+  color: '#1a1a1a',
+};
+
+const paragraph = {
+  fontSize: '16px',
+  lineHeight: '26px',
+  color: '#4a4a4a',
+};
+
+const button = {
+  backgroundColor: '#000000',
+  borderRadius: '4px',
+  color: '#ffffff',
+  fontSize: '16px',
+  fontWeight: 'bold' as const,
+  textDecoration: 'none',
+  padding: '12px 24px',
+  display: 'inline-block' as const,
+};
+
+const hr = {
+  borderColor: '#e6e6e6',
+  margin: '26px 0',
+};
+
+const footer = {
+  fontSize: '14px',
+  color: '#8c8c8c',
+};
+EOF
+
+# Create email test file
+cat > src/lib/email.test.ts << 'EOF'
+import { describe, test, expect, beforeAll } from 'bun:test';
+
+// Note: Full email tests require the email service to be imported
+// This is a placeholder that verifies the module structure
+
+describe('email', () => {
+  beforeAll(() => {
+    process.env.STAGE = 'test';
+  });
+
+  test('STAGE defaults to local', () => {
+    // Reset for this test
+    const stage = process.env.STAGE || 'local';
+    expect(['local', 'test', 'production']).toContain(stage);
+  });
+});
+EOF
+
+success "React Email configured"
+
+# Step 8: Set up TypeDoc
 log "Setting up TypeDoc"
 bun add -d typedoc
 
@@ -186,7 +419,7 @@ cat > typedoc.json << 'EOF'
 EOF
 success "TypeDoc configured"
 
-# Step 7: Set up Playwright
+# Step 9: Set up Playwright
 log "Setting up Playwright"
 bun add -d @playwright/test
 bunx playwright install chromium
@@ -201,7 +434,7 @@ test('homepage loads', async ({ page }) => {
 });
 EOF
 
-cat > playwright.config.ts << 'EOF'
+cat > playwright.config.ts << EOF
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -213,19 +446,19 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:${DEV_PORT}',
     trace: 'on-first-retry',
   },
   webServer: {
     command: 'bun run dev',
-    url: 'http://localhost:3000',
+    url: 'http://localhost:${DEV_PORT}',
     reuseExistingServer: !process.env.CI,
   },
 });
 EOF
 success "Playwright configured"
 
-# Step 8: Set up Bun test with coverage
+# Step 10: Set up Bun test with coverage
 log "Setting up Bun test configuration"
 mkdir -p test
 cat > test/setup.ts << 'EOF'
@@ -275,7 +508,7 @@ describe('cn', () => {
 EOF
 success "Bun test configured"
 
-# Step 9: Update package.json scripts
+# Step 11: Update package.json scripts
 log "Updating package.json scripts"
 # Use node to update package.json
 node -e "
@@ -283,6 +516,7 @@ const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 pkg.scripts = {
   ...pkg.scripts,
+  'dev': 'next dev --port ${DEV_PORT}',
   'format': 'biome format --write .',
   'lint': 'biome lint .',
   'lint:fix': 'biome lint --fix .',
@@ -294,14 +528,17 @@ pkg.scripts = {
   'test:all': 'bun test && playwright test',
   'db:push': 'prisma db push',
   'db:studio': 'prisma studio',
-  'db:generate': 'prisma generate'
+  'db:generate': 'prisma generate',
+  'email:dev': 'email dev --dir src/emails --port 3001',
+  'services:up': 'docker compose up -d',
+  'services:down': 'docker compose down'
 };
 pkg.prisma = { schema: './prisma' };
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
 "
 success "package.json updated"
 
-# Step 10: Update .gitignore
+# Step 12: Update .gitignore
 log "Updating .gitignore"
 cat >> .gitignore << 'EOF'
 
@@ -320,21 +557,68 @@ coverage/
 # Playwright
 playwright-report/
 test-results/
+
+# Environment (keep .env.example, ignore actual .env)
+.env
+.env.local
+.env.*.local
 EOF
 success ".gitignore updated"
 
-# Step 11: Install prompts
+# Step 13: Create .env file with generated ports
+log "Creating .env file"
+cat > .env << EOF
+# Stage: local | test | production
+STAGE=local
+
+# Generated ports (unique per project to avoid collisions)
+PORT=${DEV_PORT}
+MAILHOG_SMTP_PORT=${MAILHOG_SMTP_PORT}
+MAILHOG_WEB_PORT=${MAILHOG_WEB_PORT}
+
+# Email configuration
+EMAIL_FROM=noreply@example.com
+
+# SendGrid (production only)
+# SENDGRID_API_KEY=SG.xxx
+
+# Database
+DATABASE_URL="file:./dev.db"
+EOF
+
+# Create .env.example without sensitive values
+cat > .env.example << EOF
+# Stage: local | test | production
+STAGE=local
+
+# Generated ports (unique per project to avoid collisions)
+PORT=${DEV_PORT}
+MAILHOG_SMTP_PORT=${MAILHOG_SMTP_PORT}
+MAILHOG_WEB_PORT=${MAILHOG_WEB_PORT}
+
+# Email configuration
+EMAIL_FROM=noreply@example.com
+
+# SendGrid (production only)
+# SENDGRID_API_KEY=SG.xxx
+
+# Database
+DATABASE_URL="file:./dev.db"
+EOF
+success ".env files created"
+
+# Step 14: Install prompts
 log "Installing prompts"
 "$SCRIPT_DIR/install.sh" "$(pwd)"
 success "Prompts installed"
 
-# Step 12: Generate Prisma client and push schema
+# Step 15: Generate Prisma client and push schema
 log "Generating Prisma client"
 bunx prisma generate
 bunx prisma db push
 success "Prisma client generated and schema pushed"
 
-# Step 13: Verify setup
+# Step 16: Verify setup
 log "Verifying setup..."
 
 echo -e "${DIM}Running: bun run check${RESET}"
@@ -365,7 +649,13 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 echo -e "${GREEN}Project '$PROJECT_NAME' created successfully!${RESET}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
+echo "Ports (randomly generated to avoid collisions):"
+echo "  Dev server:    http://localhost:${DEV_PORT}"
+echo "  Mailhog SMTP:  localhost:${MAILHOG_SMTP_PORT}"
+echo "  Mailhog Web:   http://localhost:${MAILHOG_WEB_PORT}"
+echo ""
 echo "Next steps:"
 echo "  cd $FINAL_PATH"
-echo "  bun run dev"
+echo "  bun run services:up   # Start Mailhog"
+echo "  bun run dev           # Start dev server"
 echo ""

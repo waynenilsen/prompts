@@ -12,6 +12,7 @@ The opinionated stack for zero-configuration deployable applications.
 | Styling | Tailwind CSS | Utility-first, no CSS files to manage |
 | Components | shadcn/ui | Copy-paste components you own |
 | Database | Prisma + SQLite | Type-safe ORM, zero-config database |
+| Email | React Email + Mailhog/SendGrid | Beautiful templates, local dev server, production-ready |
 | Runtime | Bun | Fast, built-in test runner |
 | Hosting | Sprite | Zero-config deployment with SQLite persistence |
 
@@ -248,7 +249,110 @@ bunx shadcn@latest add button card input label
 
 Components are copied to `src/components/ui/`. You own them.
 
-### 5. Set Up TypeDoc
+### 5. Set Up Email (React Email + Mailhog)
+
+Email uses a stage-based abstraction: Mailhog locally, SendGrid in production.
+
+```bash
+# Install React Email and dependencies
+bun add react-email @react-email/components
+bun add -d @types/nodemailer
+bun add nodemailer @sendgrid/mail
+```
+
+Docker Compose runs Mailhog for local development. Each project gets random ports (50000-60000) to avoid collisions:
+
+```yaml
+# docker-compose.yml (ports are generated randomly per project)
+services:
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "${MAILHOG_SMTP_PORT:-52341}:1025"
+      - "${MAILHOG_WEB_PORT:-52342}:8025"
+```
+
+The email service abstraction:
+
+```typescript
+// src/lib/email.ts
+import { render } from '@react-email/components';
+import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
+
+const STAGE = process.env.STAGE || 'local';
+
+// Configure SendGrid for production
+if (STAGE === 'production' && process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
+
+// Mailhog transporter for local development
+const mailhogTransport = nodemailer.createTransport({
+  host: 'localhost',
+  port: Number(process.env.MAILHOG_SMTP_PORT) || 1025,
+  secure: false,
+});
+
+interface SendEmailOptions {
+  to: string;
+  subject: string;
+  template: React.ReactElement;
+  from?: string;
+}
+
+export async function sendEmail({ to, subject, template, from }: SendEmailOptions) {
+  const html = await render(template);
+  const defaultFrom = process.env.EMAIL_FROM || 'noreply@example.com';
+
+  if (STAGE === 'production') {
+    await sgMail.send({
+      to,
+      from: from || defaultFrom,
+      subject,
+      html,
+    });
+  } else {
+    await mailhogTransport.sendMail({
+      to,
+      from: from || defaultFrom,
+      subject,
+      html,
+    });
+  }
+}
+```
+
+Create email templates in `src/emails/`:
+
+```typescript
+// src/emails/welcome.tsx
+import { Html, Head, Body, Container, Text, Button } from '@react-email/components';
+
+interface WelcomeEmailProps {
+  name: string;
+  loginUrl: string;
+}
+
+export function WelcomeEmail({ name, loginUrl }: WelcomeEmailProps) {
+  return (
+    <Html>
+      <Head />
+      <Body style={{ fontFamily: 'sans-serif' }}>
+        <Container>
+          <Text>Welcome, {name}!</Text>
+          <Text>Thanks for signing up. Click below to get started.</Text>
+          <Button href={loginUrl}>Log In</Button>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+```
+
+See [Email](./email.md) for detailed patterns and testing.
+
+### 6. Set Up TypeDoc
 
 ```bash
 bun add -d typedoc
@@ -278,7 +382,7 @@ Add scripts:
 }
 ```
 
-### 6. Set Up Testing
+### 7. Set Up Testing
 
 #### Unit Tests (Bun)
 
@@ -391,7 +495,7 @@ Add test scripts:
 }
 ```
 
-### 7. Configure .gitignore
+### 8. Configure .gitignore
 
 Ensure these are ignored:
 
@@ -410,7 +514,7 @@ playwright-report/
 test-results/
 ```
 
-### 8. Verify Everything Works
+### 9. Verify Everything Works
 
 ```bash
 # Format and lint
@@ -549,6 +653,7 @@ bun run check && bun run docs && bun test && bun run build
 
 ## Related
 
+- [Email](./email.md) - React Email templates, Mailhog dev server, SendGrid production
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage, parallelism
 - [Frontend Architecture](./frontend.md) - Component organization and hooks
 - [Test-Driven Development](./tdd.md) - TDD workflow with bun test

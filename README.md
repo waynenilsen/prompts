@@ -10,6 +10,7 @@ Opinionated development workflow prompts for building zero-configuration deploya
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
 | Database | Prisma + SQLite |
+| Email | React Email + Mailhog (dev) / SendGrid (prod) |
 | Runtime | Bun |
 | Hosting | Sprite |
 

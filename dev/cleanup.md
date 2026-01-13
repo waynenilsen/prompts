@@ -196,9 +196,12 @@ import { auth0 } from 'auth0';
 
 // Right - local Prisma
 import { prisma } from '@/lib/prisma';
+
+// Right - email uses built-in abstraction
+import { sendEmail } from '@/lib/email';
 ```
 
-If you need an external service, it must be explicitly approved in the PRD.
+If you need an external service (other than SendGrid for production email), it must be explicitly approved in the PRD.
 
 ### Hooks Not Extracted
 

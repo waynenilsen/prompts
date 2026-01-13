@@ -10,7 +10,9 @@ Guides for product planning and requirements.
 
 **No external services by default.** Projects must run immediately on checkout.
 
-If a PRD requires external services (Auth0, Supabase, Stripe, etc.), it must be explicitly stated and justified.
+**Email is the exception:** Mailhog runs locally via Docker Compose, SendGrid is used in production (via `STAGE` env var).
+
+If a PRD requires other external services (Auth0, Supabase, Stripe, etc.), it must be explicitly stated and justified.
 
 ## Related
 

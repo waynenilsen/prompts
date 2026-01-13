@@ -73,12 +73,16 @@ This means:
 - No S3, Vercel Blob, or external storage
 - No Stripe (unless payments are explicitly required)
 
-If your PRD requires an external service, you must:
+**Email is the exception:** The stack includes a built-in email abstraction:
+- **Local/Dev:** Mailhog via Docker Compose (no external account needed)
+- **Production:** SendGrid (configured via `STAGE=production` env var)
+
+If your PRD requires other external services, you must:
 1. Explicitly state it as a requirement
 2. Justify why a local alternative won't work
 3. Accept the configuration burden this creates
 
-Default assumption: SQLite database, local filesystem, session-based auth.
+Default assumption: SQLite database, local filesystem, session-based auth, Mailhog for email.
 
 ---
 

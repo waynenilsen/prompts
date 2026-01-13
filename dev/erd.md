@@ -36,6 +36,7 @@ All projects use this stack unless explicitly specified otherwise:
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
 | Database | Prisma + SQLite |
+| Email | React Email + Mailhog (dev) / SendGrid (prod) |
 | Runtime | Bun |
 | Hosting | Sprite |
 
@@ -47,10 +48,13 @@ Do NOT specify:
 - Auth0, Clerk, or external auth providers → Roll your own with sessions
 - Supabase, PlanetScale, or external databases → Use SQLite
 - Vercel Blob, S3, or external storage → Use local filesystem
-- SendGrid, Resend, or external email → Log to console in dev
 - Stripe → Only if payments are explicitly required
 
-**Why:** External services require configuration, accounts, API keys, and network access. Projects must run immediately on checkout without issue.
+**Email is the exception:** Use the built-in email abstraction:
+- **Local/Dev:** Mailhog via Docker Compose (no external service needed)
+- **Production:** SendGrid (configured via `STAGE=production` env var)
+
+**Why:** External services require configuration, accounts, API keys, and network access. Projects must run immediately on checkout without issue. Email is abstracted so local development works without any external accounts.
 
 ### SQLite + Sprite
 
