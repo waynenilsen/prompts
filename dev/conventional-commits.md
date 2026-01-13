@@ -154,12 +154,44 @@ feat(db): add posts table with user relation
 
 ---
 
+## Closing Tickets
+
+**If a commit completes a ticket, include `Closes #<number>` in the footer.**
+
+This automatically closes the GitHub issue when the commit is merged to the default branch.
+
+```
+feat(auth): add password reset flow
+
+- src/auth/reset.ts: add reset token generation
+- src/auth/reset.test.ts: add tests for reset flow
+- src/components/ResetForm.tsx: add password reset form
+
+Closes #42
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+For commits that relate to but don't complete a ticket, use `Refs #<number>` instead:
+
+```
+refactor(auth): extract token utilities
+
+- src/auth/tokens.ts: extract from reset.ts
+- src/auth/tokens.test.ts: add dedicated tests
+
+Refs #42
+```
+
+---
+
 ## Why This Matters
 
 - **Code review** - reviewers see intent before reading diff
 - **Git bisect** - find exactly which change introduced a bug
 - **Changelog generation** - automated release notes
 - **Future you** - understand decisions months later
+- **Ticket tracking** - commits link to issues automatically
 
 ---
 

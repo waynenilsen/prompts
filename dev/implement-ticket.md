@@ -20,17 +20,19 @@ bun run build      # build succeeds
 
 **If any of these fail, fix them first.** Don't build on a broken foundation.
 
-### 2. Update the Ticket Status
+### 2. Move the Ticket to In Progress
 
-Use GitHub CLI to mark the ticket as in progress:
+**Before writing any code, move the ticket to "in progress".**
 
 ```bash
 # View the ticket
 gh issue view <number>
 
-# Add "in progress" label or move in project
+# Move to in progress
 gh issue edit <number> --add-label "in progress"
 ```
+
+This is not optional. Moving the ticket signals to the team that work has begun and prevents duplicate effort.
 
 **All ticket operations must use `gh` CLI.** Do not update tickets through the GitHub web UI during development.
 
@@ -215,10 +217,14 @@ feat(users): add createUser function
 - src/lib/users.test.ts: add tests for createUser
 - src/types/user.ts: add CreateUserInput interface
 
+Closes #<ticket-number>
+
 Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
+
+**Always include `Closes #<number>`** when the commit completes a ticket. See [Conventional Commits](./conventional-commits.md#closing-tickets).
 
 ### 4. Push and Verify CI
 
