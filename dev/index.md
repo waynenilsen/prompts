@@ -4,6 +4,8 @@ Developer guides and conventions for this project.
 
 ## Contents
 
+- [Implement Ticket](./implement-ticket.md) - End-to-end process for completing a ticket
+- [Project Setup](./setup.md) - Bootstrap projects, never write config by hand
 - [Conventional Commits](./conventional-commits.md) - Commit message format and best practices
 - [Test-Driven Development](./tdd.md) - TDD with proper failure discipline
 - [Pre-Push Cleanup](./cleanup.md) - Self-review before pushing
