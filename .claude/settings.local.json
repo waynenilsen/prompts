@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\ndocs: add AGENTS.md with CLAUDE.md symlink\n\n- AGENTS.md: add as primary agent configuration file\n- CLAUDE.md: add symlink to AGENTS.md\n- README.md: update description\n- dev/: move workflow guides into subdirectory\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}
