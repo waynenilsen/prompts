@@ -96,7 +96,40 @@ bunx biome init
 
 **Must be enforced in CI.** If formatting or linting fails, the build fails.
 
-### 5. Testing Setup
+### 5. Documentation with TypeDoc
+
+All TypeScript code must have TypeDoc-compatible documentation. Docs must compile without errors.
+
+```bash
+bun add -d typedoc
+```
+
+**Required scripts in package.json:**
+
+```json
+{
+  "scripts": {
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch"
+  }
+}
+```
+
+Create `typedoc.json` configuration:
+
+```json
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "exclude": ["**/*.test.ts", "**/*.e2e.test.ts"],
+  "excludePrivate": true,
+  "skipErrorChecking": false
+}
+```
+
+**Must be enforced in CI.** If docs fail to compile, the build fails.
+
+### 6. Testing Setup
 
 Unit tests use **bun test**. E2E tests use **Playwright**.
 
@@ -132,11 +165,12 @@ export default defineConfig({
 });
 ```
 
-### 6. CI Must Check Everything
+### 7. CI Must Check Everything
 
 Your CI pipeline must verify:
 
 - [ ] `bun run check` passes (format + lint)
+- [ ] `bun run docs` passes (TypeDoc compiles)
 - [ ] `bun run test:unit` passes
 - [ ] `bun run test:e2e` passes
 - [ ] Build succeeds
@@ -159,23 +193,28 @@ bun add -d @biomejs/biome
 bunx biome init
 # Add format/lint/check scripts to package.json
 
-# 3. Set up testing immediately
+# 3. Set up TypeDoc immediately
+bun add -d typedoc
+# Create typedoc.json config
+# Add docs scripts to package.json
+
+# 4. Set up testing immediately
 bun add -d @playwright/test
 bunx playwright install
 # Add test scripts to package.json
 # Configure playwright.config.ts for *.e2e.test.ts
 
-# 4. Set up CI
-# Add workflow that runs: check, test:unit, test:e2e, build
+# 5. Set up CI
+# Add workflow that runs: check, docs, test:unit, test:e2e, build
 # Verify the build passes before moving on
 
-# 5. Search for any complex packages you need
+# 6. Search for any complex packages you need
 # "how to install shadcn ui with bun 2025"
 
-# 6. Follow the official setup
+# 7. Follow the official setup
 bunx shadcn@latest init
 
-# 7. Add simple packages directly
+# 8. Add simple packages directly
 bun add zod dayjs nanoid
 ```
 
@@ -216,10 +255,12 @@ When setting up a new project, verify these are in place before writing features
 - [ ] Project bootstrapped with a tool (not manual config)
 - [ ] Biome installed and configured
 - [ ] Format/lint/check scripts in package.json
+- [ ] TypeDoc installed and configured
+- [ ] Docs script compiles without errors
 - [ ] Bun test configured for `*.test.ts`
 - [ ] Playwright configured for `*.e2e.test.ts`
 - [ ] Test scripts differentiate unit vs e2e
-- [ ] CI pipeline runs check, test:unit, test:e2e, build
+- [ ] CI pipeline runs check, docs, test:unit, test:e2e, build
 - [ ] **Build is passing**
 
 ---
@@ -240,12 +281,17 @@ bun add -d <package>        # devDependencies
 bun add -d @biomejs/biome
 bunx biome init
 
+# TypeDoc setup
+bun add -d typedoc
+# Create typedoc.json
+
 # Testing setup
 bun add -d @playwright/test
 bunx playwright install
 
 # Run checks
 bun run check               # format + lint
+bun run docs                # compile docs
 bun run test:unit           # unit tests
 bun run test:e2e            # e2e tests
 
@@ -255,4 +301,4 @@ bunx shadcn@latest init
 bunx @tanstack/router init
 ```
 
-Never write config from scratch. Never edit package.json by hand. Search before installing anything complex. Set up linting and testing early. Keep the build green.
+Never write config from scratch. Never edit package.json by hand. Search before installing anything complex. Set up linting, docs, and testing early. Keep the build green.

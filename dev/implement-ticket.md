@@ -12,6 +12,7 @@ Before writing any feature code, confirm the project is set up correctly. See [P
 
 ```bash
 bun run check      # format + lint passes
+bun run docs       # TypeDoc compiles
 bun run test:unit  # unit tests pass
 bun run test:e2e   # e2e tests pass
 bun run build      # build succeeds
@@ -152,6 +153,7 @@ The test was failing before you started. This is still your job to fix.
 
 ```bash
 bun run check       # format + lint
+bun run docs        # TypeDoc compiles
 bun run test:unit   # all unit tests
 bun run test:e2e    # all e2e tests
 bun run build       # production build
@@ -210,6 +212,7 @@ Before marking a ticket as done:
 - [ ] All acceptance criteria are met
 - [ ] Tests exist for new functionality
 - [ ] `bun run check` passes
+- [ ] `bun run docs` passes
 - [ ] `bun run test:unit` passes
 - [ ] `bun run test:e2e` passes
 - [ ] `bun run build` passes
@@ -224,7 +227,7 @@ Before marking a ticket as done:
 
 ```bash
 # Before starting
-bun run check && bun run test:unit && bun run test:e2e && bun run build
+bun run check && bun run docs && bun run test:unit && bun run test:e2e && bun run build
 
 # TDD cycle
 # 1. Write test
@@ -235,6 +238,7 @@ bun run check && bun run test:unit && bun run test:e2e && bun run build
 
 # After implementation
 bun run check
+bun run docs
 bun run test:unit
 bun run test:e2e
 bun run build
@@ -245,4 +249,4 @@ git push
 # Watch CI
 ```
 
-Tests fail? Fix them. All of them. Then push.
+Tests fail? Docs broken? Fix them. All of them. Then push.

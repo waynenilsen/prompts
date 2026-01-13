@@ -1,21 +1,18 @@
 # Pre-Push Cleanup
 
-You're done. Tests pass. Before you push, review your own work.
+You're done. Tests pass. Docs compile. Before you push, review your own work.
 
 ---
 
 ## The Process
 
-### 1. Format
+### 1. Format and Verify
 
-Run your formatter. Don't make reviewers comment on whitespace.
+Run your formatter and compile docs. Don't make reviewers comment on whitespace or broken documentation.
 
 ```bash
-npm run format
-# or
-cargo fmt
-# or
-black .
+bun run check      # format + lint
+bun run docs       # TypeDoc compiles
 ```
 
 ### 2. Stage Everything
@@ -133,13 +130,32 @@ const config: Config = parseConfig(response);
 
 That function you wrote but never called? That variable you assigned but never read? Delete it.
 
+### Missing or Broken Documentation
+
+New public functions need TypeDoc comments. If `bun run docs` fails, fix it before pushing.
+
+```typescript
+// Before: no docs
+export function processOrder(order: Order): Receipt {
+
+// After: documented
+/**
+ * Processes an order and generates a receipt.
+ * @param order - The order to process
+ * @returns The generated receipt
+ * @throws {InvalidOrderError} If the order is malformed
+ */
+export function processOrder(order: Order): Receipt {
+```
+
 ---
 
 ## The Checklist
 
 Before pushing:
 
-- [ ] Code is formatted
+- [ ] Code is formatted (`bun run check`)
+- [ ] Docs compile (`bun run docs`)
 - [ ] No console.log / debugger / print statements
 - [ ] No commented-out code
 - [ ] No copy-pasted blocks (DRY)
@@ -149,6 +165,7 @@ Before pushing:
 - [ ] Error cases are handled
 - [ ] No unrelated changes in the diff
 - [ ] Every function/variable is actually used
+- [ ] Public APIs have TypeDoc comments
 
 ---
 
@@ -167,8 +184,9 @@ Your reviewer's time is valuable. Don't waste it on things you could have caught
 ## Quick Reference
 
 ```bash
-# Format
-npm run format
+# Format and verify docs
+bun run check
+bun run docs
 
 # Stage
 git add -A
@@ -180,4 +198,4 @@ git diff --staged
 git commit -m "feat(auth): add password reset flow"
 ```
 
-Read your diff. Fix what you find. Then push.
+Read your diff. Fix what you find. Compile docs. Then push.
