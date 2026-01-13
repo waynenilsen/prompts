@@ -30,7 +30,7 @@ Developer guides and conventions for this project.
 - **SQLite only** — no Postgres, MySQL, or cloud databases
 - **GitHub CLI (`gh`)** for all ticket operations
 - **Unit tests next to source** — no `tests/` directory
-- **E2E tests in `e2e/`** — use `*.spec.ts`, not `*.e2e.test.ts`
+- **E2E tests in `e2e/`** — use `*.e2e.ts`, not `*.e2e.test.ts`
 
 ## Related
 

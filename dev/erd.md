@@ -291,7 +291,7 @@ What other approaches did you evaluate?
 ### Testing Strategy
 
 - Unit tests (`*.test.ts` next to source)
-- E2E tests (`e2e/*.spec.ts`)
+- E2E tests (`e2e/*.e2e.ts`)
 - Mock database for unit tests
 - Real SQLite for integration tests
 

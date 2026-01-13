@@ -252,7 +252,7 @@ export function SubmitButton({ isLoading, children }: SubmitButtonProps) {
 | Test Type | Extension | Location | Runner |
 |-----------|-----------|----------|--------|
 | Unit tests | `*.test.ts` | Next to source file | bun test |
-| E2E tests | `*.spec.ts` | `e2e/` directory | Playwright |
+| E2E tests | `*.e2e.ts` | `e2e/` directory | Playwright |
 
 **Critical:** Do NOT use `.e2e.test.ts` for Playwright tests. Bun will pick them up and fail.
 
@@ -284,13 +284,13 @@ E2E tests live in a dedicated directory:
 
 ```
 e2e/
-├── auth.spec.ts
-├── dashboard.spec.ts
-└── checkout.spec.ts
+├── auth.e2e.ts
+├── dashboard.e2e.ts
+└── checkout.e2e.ts
 ```
 
 ```typescript
-// e2e/auth.spec.ts
+// e2e/auth.e2e.ts
 import { test, expect } from '@playwright/test';
 
 test('user can log in', async ({ page }) => {
@@ -316,7 +316,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: '**/*.spec.ts',  // Only .spec.ts files
+  testMatch: '**/*.e2e.ts',  // Only .e2e.ts files
   webServer: {
     command: 'bun run dev',
     port: 3000,
@@ -388,7 +388,7 @@ Before adding a new feature:
 - [ ] Hooks are in separate files in `hooks/`
 - [ ] Components are thin (assembly, not logic)
 - [ ] Unit tests are next to source files (`*.test.ts`)
-- [ ] E2E tests are in `e2e/` directory (`*.spec.ts`)
+- [ ] E2E tests are in `e2e/` directory (`*.e2e.ts`)
 - [ ] shadcn/ui components used where appropriate
 - [ ] No business logic in components
 - [ ] Types defined in `types/`

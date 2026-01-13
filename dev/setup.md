@@ -207,7 +207,7 @@ Create `typedoc.json`:
   "entryPoints": ["src"],
   "entryPointStrategy": "expand",
   "out": "docs",
-  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"],
+  "exclude": ["**/*.test.ts", "**/*.e2e.ts", "**/node_modules/**"],
   "excludePrivate": true,
   "skipErrorChecking": false
 }
@@ -280,7 +280,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: '**/*.spec.ts',  // NOT .e2e.test.ts - bun will pick those up!
+  testMatch: '**/*.e2e.ts',  // NOT .e2e.test.ts - bun will pick those up!
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -298,13 +298,13 @@ export default defineConfig({
 });
 ```
 
-E2E tests live in `e2e/` directory with `*.spec.ts` extension:
+E2E tests live in `e2e/` directory with `*.e2e.ts` extension:
 
 ```
 e2e/
-├── auth.spec.ts
-├── dashboard.spec.ts
-└── users.spec.ts
+├── auth.e2e.ts
+├── dashboard.e2e.ts
+└── users.e2e.ts
 ```
 
 **Critical:** Do NOT use `.e2e.test.ts` extension. Bun's test runner will pick up anything with `.test.ts` and fail when it can't run Playwright tests.
@@ -438,7 +438,7 @@ Before writing features, verify:
 - [ ] shadcn/ui initialized
 - [ ] TypeDoc configured
 - [ ] Bun test configured with test-near-code pattern
-- [ ] Playwright configured for `e2e/*.spec.ts`
+- [ ] Playwright configured for `e2e/*.e2e.ts`
 - [ ] All scripts work: `check`, `docs`, `test`, `test:e2e`, `build`
 - [ ] Dev server starts without errors
 - [ ] **No external services required**

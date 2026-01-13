@@ -270,8 +270,8 @@ tests/
 
 ```
 e2e/
-├── auth.spec.ts           # ✓ Uses .spec.ts extension
-├── users.spec.ts
+├── auth.e2e.ts           # ✓ Uses .e2e.ts extension
+├── users.e2e.ts
 ```
 
 **NOT:**
@@ -289,7 +289,7 @@ Before marking a ticket as done:
 - [ ] All acceptance criteria are met
 - [ ] Tests exist for new functionality
 - [ ] Tests are next to source files (`*.test.ts`)
-- [ ] E2E tests use `*.spec.ts` in `e2e/` directory
+- [ ] E2E tests use `*.e2e.ts` in `e2e/` directory
 - [ ] `bun run check` passes
 - [ ] `bun run docs` passes
 - [ ] `bun test` passes

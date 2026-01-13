@@ -151,11 +151,11 @@ tests/
 
 ### E2E Tests with Wrong Extension
 
-E2E tests must use `*.spec.ts` in the `e2e/` directory:
+E2E tests must use `*.e2e.ts` in the `e2e/` directory:
 
 ```
 e2e/
-├── auth.spec.ts         # ✓ Correct
+├── auth.e2e.ts         # ✓ Correct
 ```
 
 NOT `*.e2e.test.ts` (bun will pick these up):
@@ -243,7 +243,7 @@ Before pushing:
 - [ ] Every function/variable is actually used
 - [ ] Public APIs have TypeDoc comments
 - [ ] Unit tests are next to source files (`*.test.ts`)
-- [ ] E2E tests use `*.spec.ts` in `e2e/`
+- [ ] E2E tests use `*.e2e.ts` in `e2e/`
 - [ ] No external service dependencies added
 - [ ] Hooks extracted for testable logic
 

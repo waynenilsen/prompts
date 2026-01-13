@@ -25,7 +25,7 @@ Repeat.
 | Test Type | Extension | Location | Runner |
 |-----------|-----------|----------|--------|
 | Unit tests | `*.test.ts` | Next to source file | `bun test` |
-| E2E tests | `*.spec.ts` | `e2e/` directory | `playwright test` |
+| E2E tests | `*.e2e.ts` | `e2e/` directory | `playwright test` |
 
 **Critical:** Do NOT use `.e2e.test.ts` for Playwright tests. Bun will pick them up and fail.
 
@@ -55,9 +55,9 @@ E2E tests are the exception. They test user flows across the entire application 
 
 ```
 e2e/
-├── auth.spec.ts
-├── dashboard.spec.ts
-└── checkout.spec.ts
+├── auth.e2e.ts
+├── dashboard.e2e.ts
+└── checkout.e2e.ts
 ```
 
 ---
