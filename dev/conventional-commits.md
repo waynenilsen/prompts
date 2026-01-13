@@ -164,3 +164,11 @@ chore(scope): maintain thing    # maintenance
 ```
 
 Always list files touched and how.
+
+---
+
+## Related
+
+- [Implement Ticket](./implement-ticket.md) - Full workflow that uses conventional commits
+- [Create Tickets from ERD](./create-tickets-from-erd.md) - Ticket titles follow conventional commit types
+- [Pre-Push Cleanup](./cleanup.md) - Self-review before committing

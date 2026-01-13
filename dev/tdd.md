@@ -224,3 +224,11 @@ Don't write 50 tests before implementing anything. Write one test, stub, fail, i
 ```
 
 The test must fail because your logic is wrong, not because your code doesn't exist.
+
+---
+
+## Related
+
+- [Implement Ticket](./implement-ticket.md) - Full ticket workflow that uses TDD
+- [Project Setup](./setup.md) - Setting up bun test and Playwright
+- [Pre-Push Cleanup](./cleanup.md) - Self-review after tests pass

@@ -42,7 +42,7 @@ erd/
 - Sequential numbers, never reused
 - Reference in commits and PRs as `ERD-0001`
 
-Each ERD should link to its corresponding PRD when applicable.
+Each ERD should link to its corresponding PRD when applicable. See the [PRD guide](../product/prd.md) for how to write PRDs.
 
 ---
 
@@ -275,6 +275,14 @@ Before requesting review:
 - [ ] Testing strategy defined
 - [ ] Rollout plan exists
 - [ ] Open questions are surfaced
+
+---
+
+## Related
+
+- [Product Requirements Document](../product/prd.md) - Product counterpart to the ERD
+- [Create Tickets from ERD](./create-tickets-from-erd.md) - Break down ERDs into actionable tickets
+- [Implement Ticket](./implement-ticket.md) - Process for completing tickets
 
 ---
 

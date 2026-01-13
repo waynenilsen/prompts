@@ -83,7 +83,7 @@ prd/
 - Sequential numbers, never reused
 - Reference in commits, PRs, and ERDs as `PRD-0001`
 
-Each PRD may have a corresponding ERD (Engineering Requirements Document) in `./erd/` with the same number.
+Each PRD may have a corresponding ERD (Engineering Requirements Document) in `./erd/` with the same number. See the [ERD guide](../dev/erd.md) for how to write ERDs.
 
 ---
 
@@ -229,6 +229,13 @@ Before sharing a PRD:
 - [ ] Open questions are surfaced
 - [ ] Fits on one page (or close to it)
 - [ ] Written in plain English, no jargon
+
+---
+
+## Related
+
+- [Engineering Requirements Document](../dev/erd.md) - Technical counterpart to the PRD
+- [Create Tickets from ERD](../dev/create-tickets-from-erd.md) - Break down ERDs into actionable tickets
 
 ---
 

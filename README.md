@@ -1,4 +1,4 @@
 # prompts
 
-./dev - Development guidelines
-./product - Product planning and requirements
+- [./dev](./dev/index.md) - Development guidelines
+- [./product](./product/index.md) - Product planning and requirements

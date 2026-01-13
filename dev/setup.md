@@ -302,3 +302,11 @@ bunx @tanstack/router init
 ```
 
 Never write config from scratch. Never edit package.json by hand. Search before installing anything complex. Set up linting, docs, and testing early. Keep the build green.
+
+---
+
+## Related
+
+- [Implement Ticket](./implement-ticket.md) - End-to-end process for completing a ticket (uses setup verification)
+- [Test-Driven Development](./tdd.md) - TDD workflow for bun test
+- [Pre-Push Cleanup](./cleanup.md) - Self-review before pushing

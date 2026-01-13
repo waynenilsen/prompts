@@ -250,3 +250,11 @@ git push
 ```
 
 Tests fail? Docs broken? Fix them. All of them. Then push.
+
+---
+
+## Related
+
+- [Create Tickets from ERD](./create-tickets-from-erd.md) - How tickets are created from ERDs
+- [Engineering Requirements Document](./erd.md) - Technical specs that define ticket requirements
+- [Product Requirements Document](../product/prd.md) - Product requirements that inform ERDs

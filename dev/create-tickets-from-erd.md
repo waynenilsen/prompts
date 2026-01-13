@@ -1,6 +1,6 @@
 # Creating Tickets from an ERD
 
-Breaking down an Engineering Requirements Document into actionable tickets, ordered for dependency-aware burndown.
+Breaking down an [Engineering Requirements Document](./erd.md) into actionable tickets, ordered for dependency-aware burndown.
 
 ---
 
@@ -302,6 +302,15 @@ gh project item-list <number> --owner <owner>
 # Add existing issue to project
 gh project item-add <number> --owner <owner> --url <issue-url>
 ```
+
+---
+
+## Related
+
+- [Engineering Requirements Document](./erd.md) - How to write ERDs
+- [Product Requirements Document](../product/prd.md) - Product requirements that inform ERDs
+- [Implement Ticket](./implement-ticket.md) - Process for completing tickets
+- [Conventional Commits](./conventional-commits.md) - Commit message format for tickets
 
 ---
 

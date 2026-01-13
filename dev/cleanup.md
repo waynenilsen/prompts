@@ -199,3 +199,11 @@ git commit -m "feat(auth): add password reset flow"
 ```
 
 Read your diff. Fix what you find. Compile docs. Then push.
+
+---
+
+## Related
+
+- [Implement Ticket](./implement-ticket.md) - Full ticket workflow that ends with cleanup
+- [Conventional Commits](./conventional-commits.md) - Commit message format after cleanup
+- [Test-Driven Development](./tdd.md) - TDD workflow before cleanup
