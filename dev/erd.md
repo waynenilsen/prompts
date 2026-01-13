@@ -248,10 +248,18 @@ export async function createUser(data: CreateUserInput) {
 
 ### Data Model
 
-Prisma schema for SQLite:
+We use **multi-file Prisma schemas** — one file per domain. See [Project Setup](./setup.md) for full details.
+
+```
+prisma/
+├── schema.prisma       # Generator + datasource only
+├── user.prisma         # User model
+├── post.prisma         # Post model
+└── migrations/
+```
 
 ```prisma
-// prisma/schema.prisma
+// prisma/user.prisma
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -260,7 +268,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+```
 
+```prisma
+// prisma/post.prisma
 model Post {
   id        String   @id @default(cuid())
   title     String
@@ -268,6 +279,16 @@ model Post {
   author    User     @relation(fields: [authorId], references: [id])
   authorId  String
   createdAt DateTime @default(now())
+}
+```
+
+**Requires** `prisma.schema` config in `package.json`:
+
+```json
+{
+  "prisma": {
+    "schema": "./prisma"
+  }
 }
 ```
 

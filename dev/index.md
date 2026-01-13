@@ -9,7 +9,7 @@ Developer guides and conventions for this project.
 | Framework | Next.js (App Router) |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
-| Database | Prisma + SQLite |
+| Database | Prisma + SQLite (multi-file schema) |
 | Runtime | Bun |
 | Hosting | Sprite |
 

@@ -113,7 +113,9 @@ Add scripts to `package.json`:
 }
 ```
 
-### 3. Set Up Prisma with SQLite
+### 3. Set Up Prisma with SQLite (Multi-File Schema)
+
+We use **multi-file Prisma schemas** to organize models by domain. This is GA as of Prisma v6.7.0.
 
 ```bash
 bun add prisma --dev
@@ -121,9 +123,25 @@ bun add @prisma/client
 bunx prisma init --datasource-provider sqlite
 ```
 
-This creates `prisma/schema.prisma`:
+#### Directory Structure
+
+Reorganize into multi-file schema:
+
+```
+prisma/
+├── schema.prisma       # Generator and datasource only
+├── user.prisma         # User model
+├── post.prisma         # Post model (example)
+├── migrations/         # Auto-generated
+└── dev.db              # SQLite database file
+```
+
+#### Main Schema File
+
+The `prisma/schema.prisma` contains only generator and datasource:
 
 ```prisma
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -132,18 +150,49 @@ datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
+```
 
-// Add your models here
+#### Model Files
+
+Each domain gets its own `.prisma` file:
+
+```prisma
+// prisma/user.prisma
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  posts     Post[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 ```
 
-Create the Prisma client singleton:
+```prisma
+// prisma/post.prisma
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  createdAt DateTime @default(now())
+}
+```
+
+#### Configure package.json
+
+Tell Prisma to use the directory (required for multi-file):
+
+```json
+{
+  "prisma": {
+    "schema": "./prisma"
+  }
+}
+```
+
+#### Prisma Client Singleton
 
 ```typescript
 // src/lib/prisma.ts
@@ -156,14 +205,14 @@ export const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 ```
 
-Generate client and push schema:
+#### Generate and Push
 
 ```bash
 bunx prisma generate
 bunx prisma db push
 ```
 
-Add Prisma scripts to `package.json`:
+#### Add Scripts to package.json
 
 ```json
 {
@@ -174,6 +223,11 @@ Add Prisma scripts to `package.json`:
   }
 }
 ```
+
+**Key constraints:**
+- `schema.prisma` must be at `prisma/schema.prisma` (not in a subdirectory)
+- `migrations/` must be at `prisma/migrations/`
+- All `.prisma` files must be in the same `prisma/` directory
 
 ### 4. Set Up shadcn/ui
 
