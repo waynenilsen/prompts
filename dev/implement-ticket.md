@@ -36,7 +36,11 @@ This is not optional. Moving the ticket signals to the team that work has begun 
 
 **All ticket operations must use `gh` CLI.** Do not update tickets through the GitHub web UI during development.
 
-### 3. Understand the Ticket
+### 3. Check Domain-Specific Guides
+
+If working on authentication, read [Authentication](./auth.md) first.
+
+### 4. Understand the Ticket
 
 Read the ticket completely. Ask questions before coding, not after.
 
@@ -347,6 +351,7 @@ Tests fail? Docs broken? Fix them. All of them. Then push.
 
 ## Related
 
+- [Authentication](./auth.md) - Email/password auth, session management, no RLS
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - How tickets are created from ERDs
 - [Engineering Requirements Document](./erd.md) - Technical specs that define ticket requirements
