@@ -270,7 +270,7 @@ export async function sendEmail({
 
     if (STAGE === 'test') {
       // Log to console for test visibility
-      console.log(\`[EMAIL] To: \${to}, Subject: \${subject}\`);
+      console.log(`[EMAIL] To: ${to}, Subject: ${subject}`);
       return { success: true, messageId: 'test-message-id' };
     }
 
