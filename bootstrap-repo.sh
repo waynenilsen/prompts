@@ -3,8 +3,9 @@
 # bootstrap-repo.sh - Bootstrap a new project with the full stack
 #
 # Usage:
-#   ./bootstrap-repo.sh <project-name>
+#   ./bootstrap-repo.sh <path>
 #   ./bootstrap-repo.sh my-app
+#   ./bootstrap-repo.sh ~/projects/foo/bar/my-app
 #
 # Creates a new Next.js project with:
 #   - TypeScript + App Router
@@ -44,14 +45,29 @@ error() {
 
 # Validate arguments
 if [ -z "${1:-}" ]; then
-  echo "Usage: bootstrap-repo.sh <project-name>"
+  echo "Usage: bootstrap-repo.sh <path>"
+  echo "  e.g., bootstrap-repo.sh my-app"
+  echo "  e.g., bootstrap-repo.sh ~/projects/foo/bar/my-app"
   exit 1
 fi
 
-PROJECT_NAME="$1"
+TARGET_PATH="$1"
+PROJECT_NAME="$(basename "$TARGET_PATH")"
+PARENT_DIR="$(dirname "$TARGET_PATH")"
 
-if [ -d "$PROJECT_NAME" ]; then
-  error "Directory '$PROJECT_NAME' already exists"
+# Create parent directories if they don't exist (and it's not just ".")
+if [ "$PARENT_DIR" != "." ] && [ ! -d "$PARENT_DIR" ]; then
+  log "Creating parent directory: $PARENT_DIR"
+  mkdir -p "$PARENT_DIR"
+fi
+
+if [ -d "$TARGET_PATH" ]; then
+  error "Directory '$TARGET_PATH' already exists"
+fi
+
+# Change to parent directory if specified
+if [ "$PARENT_DIR" != "." ]; then
+  cd "$PARENT_DIR"
 fi
 
 # Step 1: Create Next.js project
@@ -343,12 +359,13 @@ fi
 
 success "All checks passed!"
 
+FINAL_PATH="$(pwd)"
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${GREEN}Project '$PROJECT_NAME' created successfully!${RESET}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
 echo "Next steps:"
-echo "  cd $PROJECT_NAME"
+echo "  cd $FINAL_PATH"
 echo "  bun run dev"
 echo ""
