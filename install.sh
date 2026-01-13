@@ -22,7 +22,7 @@ for item in "$SCRIPT_DIR"/*  "$SCRIPT_DIR"/.[!.]*; do
     [ -e "$item" ] || continue
     name="$(basename "$item")"
     case "$name" in
-        .git|.claude|AGENTS.md|CLAUDE.md|install.sh) continue ;;
+        .git|.claude|.gitignore|AGENTS.md|CLAUDE.md|install.sh|bootstrap-repo.sh|test-bootstrap-repo-output) continue ;;
     esac
     cp -r "$item" "$DEST/"
 done
