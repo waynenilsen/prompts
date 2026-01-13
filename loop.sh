@@ -64,24 +64,6 @@ run_ralph() {
     '
 }
 
-push_changes() {
-  local branch
-  branch=$(git branch --show-current)
-
-  # Check if there are changes to push
-  if ! git diff --quiet HEAD 2>/dev/null || [ -n "$(git status --porcelain)" ]; then
-    git add -A
-    git commit -m "chore: ralph iteration ${ITERATION}" --no-verify 2>/dev/null || true
-  fi
-
-  # Push to remote, set upstream if needed
-  if git rev-parse --verify "origin/${branch}" >/dev/null 2>&1; then
-    git push
-  else
-    git push -u origin "${branch}"
-  fi
-}
-
 main() {
   echo -e "${CYAN}ralph loop starting${RESET}"
   [ "$MAX_ITERATIONS" -gt 0 ] && echo -e "${DIM}max iterations: ${MAX_ITERATIONS}${RESET}"
@@ -94,10 +76,6 @@ main() {
     echo ""
 
     run_ralph
-
-    echo ""
-    echo -e "${DIM}pushing changes...${RESET}"
-    push_changes
 
     # Check iteration limit
     if [ "$MAX_ITERATIONS" -gt 0 ] && [ "$ITERATION" -ge "$MAX_ITERATIONS" ]; then
