@@ -397,6 +397,7 @@ Before adding a new feature:
 
 ## Related
 
+- [Unit Testing](./unit-testing.md) - Database isolation for hook tests, coverage thresholds
 - [Project Setup](./setup.md) - Full stack setup including frontend tooling
 - [Test-Driven Development](./tdd.md) - TDD workflow for hooks and components
 - [Implement Ticket](./implement-ticket.md) - End-to-end ticket workflow

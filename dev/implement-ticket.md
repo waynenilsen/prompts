@@ -290,9 +290,10 @@ Before marking a ticket as done:
 - [ ] Tests exist for new functionality
 - [ ] Tests are next to source files (`*.test.ts`)
 - [ ] E2E tests use `*.e2e.ts` in `e2e/` directory
+- [ ] Coverage meets 95% threshold (see [Unit Testing](./unit-testing.md))
 - [ ] `bun run check` passes
 - [ ] `bun run docs` passes
-- [ ] `bun test` passes
+- [ ] `bun test` passes (with coverage)
 - [ ] `bun run test:e2e` passes
 - [ ] `bun run build` passes
 - [ ] No debug statements in code
@@ -340,6 +341,7 @@ Tests fail? Docs broken? Fix them. All of them. Then push.
 
 ## Related
 
+- [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - How tickets are created from ERDs
 - [Engineering Requirements Document](./erd.md) - Technical specs that define ticket requirements
 - [Product Requirements Document](../product/prd.md) - Product requirements that inform ERDs

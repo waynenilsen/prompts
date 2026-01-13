@@ -398,7 +398,7 @@ Tests belong next to their source files. The only exception is E2E tests which g
 ## Quick Reference
 
 ```bash
-# Run all unit tests
+# Run all unit tests with coverage
 bun test
 
 # Run specific test file
@@ -410,9 +410,14 @@ bun test --test-name-pattern "getUserById"
 # Watch mode
 bun test --watch
 
+# Coverage report (configured in bunfig.toml)
+bun test --coverage
+
 # Run E2E tests (separate command)
 bunx playwright test
 ```
+
+**Coverage is mandatory.** See [Unit Testing](./unit-testing.md) for 95% threshold configuration.
 
 ```
 1. Write test (*.test.ts next to source)
@@ -431,6 +436,7 @@ The test must fail because your logic is wrong, not because your code doesn't ex
 
 ## Related
 
+- [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Frontend Architecture](./frontend.md) - Testing hooks and components
 - [Project Setup](./setup.md) - Setting up bun test and Playwright
 - [Implement Ticket](./implement-ticket.md) - Full ticket workflow that uses TDD

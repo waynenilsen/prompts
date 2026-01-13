@@ -282,9 +282,9 @@ Add scripts:
 
 #### Unit Tests (Bun)
 
-Bun has a built-in test runner. No additional packages needed.
+Bun has a built-in test runner with coverage. See [Unit Testing](./unit-testing.md) for detailed patterns.
 
-Create test setup:
+Create test setup with database isolation:
 
 ```typescript
 // test/setup.ts
@@ -299,11 +299,24 @@ afterAll(() => {
 });
 ```
 
-Configure in `bunfig.toml`:
+Configure `bunfig.toml` with coverage:
 
 ```toml
 [test]
 preload = ["./test/setup.ts"]
+
+# Always generate coverage
+coverage = true
+
+# Fail build if coverage drops below 95%
+coverageThreshold = { line = 0.95, function = 0.95, statement = 0.95 }
+
+# Output formats
+coverageReporter = ["text", "lcov"]
+coverageDir = "./coverage"
+
+# Skip test files in coverage reports
+coverageSkipTestFiles = true
 ```
 
 Unit tests use `*.test.ts` and live **next to their source files**:
@@ -318,7 +331,10 @@ src/
 │   └── use-user.test.ts # Unit test here
 ```
 
-**Do NOT create a `tests/` directory for unit tests.**
+**Key rules:**
+- **Do NOT create a `tests/` directory** — tests live next to source
+- **One database per test** — enables parallel execution (see [Unit Testing](./unit-testing.md))
+- **95% coverage minimum** — enforced by bunfig.toml threshold
 
 #### E2E Tests (Playwright)
 
@@ -533,6 +549,7 @@ bun run check && bun run docs && bun test && bun run build
 
 ## Related
 
+- [Unit Testing](./unit-testing.md) - Database isolation, coverage, parallelism
 - [Frontend Architecture](./frontend.md) - Component organization and hooks
 - [Test-Driven Development](./tdd.md) - TDD workflow with bun test
 - [Implement Ticket](./implement-ticket.md) - Using setup in ticket workflow

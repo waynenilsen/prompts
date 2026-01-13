@@ -16,6 +16,7 @@ Developer guides and conventions for this project.
 ## Contents
 
 - [Project Setup](./setup.md) - Bootstrap projects with the full stack
+- [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Frontend Architecture](./frontend.md) - Component organization, hooks, shadcn/ui patterns
 - [Engineering Requirements Document](./erd.md) - Technical specs and design docs
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - Break ERD into ordered backlog (via `gh` CLI)
@@ -31,6 +32,8 @@ Developer guides and conventions for this project.
 - **GitHub CLI (`gh`)** for all ticket operations
 - **Unit tests next to source** — no `tests/` directory
 - **E2E tests in `e2e/`** — use `*.e2e.ts`, not `*.e2e.test.ts`
+- **95% coverage minimum** — enforced by bunfig.toml threshold
+- **One database per test** — enables parallel execution
 
 ## Related
 
