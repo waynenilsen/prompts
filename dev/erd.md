@@ -24,6 +24,49 @@ The ERD translates product requirements into technical decisions. It documents t
 
 ---
 
+## Constraints
+
+### The Stack
+
+All projects use this stack unless explicitly specified otherwise:
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js (App Router) |
+| Styling | Tailwind CSS |
+| Components | shadcn/ui |
+| Database | Prisma + SQLite |
+| Runtime | Bun |
+| Hosting | Sprite |
+
+### No External Services
+
+**You are forbidden from using external services unless specifically asked.**
+
+Do NOT specify:
+- Auth0, Clerk, or external auth providers → Roll your own with sessions
+- Supabase, PlanetScale, or external databases → Use SQLite
+- Vercel Blob, S3, or external storage → Use local filesystem
+- SendGrid, Resend, or external email → Log to console in dev
+- Stripe → Only if payments are explicitly required
+
+**Why:** External services require configuration, accounts, API keys, and network access. Projects must run immediately on checkout without issue.
+
+### SQLite + Sprite
+
+The database is SQLite. This is intentional:
+- No database server to configure
+- No connection strings to manage
+- Database is a file that Sprite persists
+- Clone, install, run — that's it
+
+When writing ERDs, design for SQLite:
+- Single-file database in `prisma/dev.db`
+- No stored procedures or database-specific features
+- Prisma handles all data access
+
+---
+
 ## File Organization
 
 ERDs are stored in the `./erd/` directory with sequential 4-digit identifiers followed by a kebab-case description:
@@ -117,6 +160,19 @@ What context does the reader need? Link to:
 
 **Non-Goals:** What are we explicitly not solving? What's out of scope?
 
+### Constraints Checklist
+
+Before proceeding, verify:
+
+- [ ] Uses SQLite (not Postgres, MySQL, etc.)
+- [ ] No external authentication services
+- [ ] No external database services
+- [ ] No external storage services
+- [ ] No external email services
+- [ ] Runs on checkout without configuration
+
+If any external service is required, it must be explicitly approved in the PRD.
+
 ### Architecture
 
 **System Design**
@@ -125,8 +181,12 @@ High-level architecture. Diagrams are encouraged.
 
 ```
 ┌─────────┐     ┌─────────┐     ┌─────────┐
-│ Client  │────▶│   API   │────▶│   DB    │
+│ Client  │────▶│ Next.js │────▶│ SQLite  │
 └─────────┘     └─────────┘     └─────────┘
+                     │
+              ┌──────┴──────┐
+              │   Prisma    │
+              └─────────────┘
 ```
 
 **Components**
@@ -144,39 +204,71 @@ Use requirement IDs for traceability.
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | REQ-001 | API shall respond within 200ms at p95 | Must |
-| REQ-002 | System shall handle 1000 concurrent users | Must |
-| REQ-003 | Data should be encrypted at rest | Should |
+| REQ-002 | System shall handle 100 concurrent users | Must |
+| REQ-003 | Data should be validated before storage | Should |
 
 ### API Design
 
-If introducing or modifying APIs:
+If introducing or modifying APIs, use Next.js patterns:
 
 ```typescript
-// Endpoint: POST /api/users
-interface CreateUserRequest {
-  email: string;
-  name: string;
-}
+// app/api/users/route.ts
+import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
 
-interface CreateUserResponse {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: string;
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  const user = await prisma.user.create({
+    data: {
+      email: body.email,
+      name: body.name,
+    },
+  });
+
+  return NextResponse.json(user, { status: 201 });
+}
+```
+
+Or Server Actions:
+
+```typescript
+// app/actions/users.ts
+'use server';
+
+import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
+
+export async function createUser(data: CreateUserInput) {
+  const user = await prisma.user.create({ data });
+  revalidatePath('/users');
+  return user;
 }
 ```
 
 ### Data Model
 
-Schema changes, new tables, migrations.
+Prisma schema for SQLite:
 
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
+```prisma
+// prisma/schema.prisma
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  posts     Post[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  createdAt DateTime @default(now())
+}
 ```
 
 ### Alternatives Considered
@@ -185,33 +277,30 @@ What other approaches did you evaluate?
 
 | Alternative | Pros | Cons | Why Not |
 |-------------|------|------|---------|
-| Option A | Fast | Complex | Too much operational burden |
-| Option B | Simple | Slow | Doesn't meet latency requirements |
+| PostgreSQL | Full-featured | Requires server | External dependency |
+| Auth0 | Easy to integrate | Requires account | External service |
+| In-memory store | Fast | Not persistent | Data loss on restart |
 
 ### Security Considerations
 
-- Authentication/authorization changes
-- Data sensitivity
-- Input validation
-- Threat model
+- Authentication: Session-based (no external providers)
+- Authorization: Role-based, stored in SQLite
+- Input validation: Zod schemas
+- Data sensitivity: PII handling
 
 ### Testing Strategy
 
-How will you verify this works?
+- Unit tests (`*.test.ts` next to source)
+- E2E tests (`e2e/*.spec.ts`)
+- Mock database for unit tests
+- Real SQLite for integration tests
 
-- Unit tests
-- Integration tests
-- Load tests
-- Manual QA
+### Deployment
 
-### Rollout Plan
-
-How will you deploy this safely?
-
-- Feature flags
-- Staged rollout
-- Rollback plan
-- Monitoring
+Deployed to Sprite:
+- SQLite file persisted by Sprite filesystem
+- No external services to configure
+- Environment variables have sensible defaults
 
 ### Open Questions
 
@@ -219,22 +308,9 @@ What's unresolved? What needs input?
 
 ### Dependencies
 
-- External services
-- Other teams
+- No external service dependencies (by design)
+- Other internal modules this depends on
 - Timeline blockers
-
----
-
-## RFC Style Alternative
-
-For larger architectural decisions, consider the RFC (Request for Comments) format used at companies like Uber, Stripe, and Airbnb.
-
-> "RFCs prevent scope creep, reduce last-minute pivots, and ensure dependencies are accounted for."
-
-Key additions for RFC style:
-- **Discussion period** — Time for async feedback before approval
-- **Decision record** — Final decision and rationale
-- **Stakeholder sign-off** — Explicit approval from affected parties
 
 ---
 
@@ -252,6 +328,10 @@ If you only present one option, you haven't done design work. Show alternatives.
 
 "Fast," "scalable," "secure" mean nothing without numbers.
 
+### External Service Creep
+
+Adding "just one" external service breaks the zero-config promise. Push back.
+
 ### Hiding Complexity
 
 Don't gloss over the hard parts. That's where bugs live.
@@ -268,12 +348,13 @@ Before requesting review:
 
 - [ ] Links to corresponding PRD (if applicable)
 - [ ] Goals and non-goals are explicit
+- [ ] Constraints checklist completed (no external services)
 - [ ] Architecture diagram exists
 - [ ] Requirements are testable and numbered
 - [ ] Alternatives were considered and documented
 - [ ] Security implications addressed
 - [ ] Testing strategy defined
-- [ ] Rollout plan exists
+- [ ] SQLite schema defined in Prisma format
 - [ ] Open questions are surfaced
 
 ---
@@ -283,6 +364,7 @@ Before requesting review:
 - [Product Requirements Document](../product/prd.md) - Product counterpart to the ERD
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - Break down ERDs into actionable tickets
 - [Implement Ticket](./implement-ticket.md) - Process for completing tickets
+- [Project Setup](./setup.md) - Stack configuration details
 
 ---
 

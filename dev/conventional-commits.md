@@ -132,12 +132,24 @@ refactor(components): convert class components to hooks
 
 Button:
 - src/components/Button.tsx: convert to functional component
-- src/components/Button.test.tsx: update test setup
+- src/components/Button.test.ts: update test setup
 
 Modal:
 - src/components/Modal.tsx: convert to functional component
 - src/components/Modal.tsx: extract useModalState hook
-- src/hooks/useModalState.ts: add new hook
+- src/hooks/use-modal-state.ts: add new hook
+- src/hooks/use-modal-state.test.ts: add hook tests
+```
+
+### Prisma Schema Changes
+
+```
+feat(db): add posts table with user relation
+
+- prisma/schema.prisma: add Post model with User relation
+- src/lib/posts.ts: add post CRUD functions
+- src/lib/posts.test.ts: add tests for post functions
+- src/hooks/use-posts.ts: add data fetching hook
 ```
 
 ---
@@ -172,3 +184,4 @@ Always list files touched and how.
 - [Implement Ticket](./implement-ticket.md) - Full workflow that uses conventional commits
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - Ticket titles follow conventional commit types
 - [Pre-Push Cleanup](./cleanup.md) - Self-review before committing
+- [Frontend Architecture](./frontend.md) - Component and hook organization patterns

@@ -1,87 +1,106 @@
 # Project Setup
 
-Never write configuration files by hand. Use tools that know what they're doing.
+The opinionated stack for zero-configuration deployable applications.
 
 ---
 
-## The Rules
+## The Stack
 
-### 1. Never Write tsconfig.json or package.json From Scratch
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Framework | Next.js | Full-stack React, App Router, Server Actions |
+| Styling | Tailwind CSS | Utility-first, no CSS files to manage |
+| Components | shadcn/ui | Copy-paste components you own |
+| Database | Prisma + SQLite | Type-safe ORM, zero-config database |
+| Runtime | Bun | Fast, built-in test runner |
+| Hosting | Sprite | Zero-config deployment with SQLite persistence |
 
-These files have dozens of options with subtle interactions. You will get them wrong.
+### Why This Stack
 
-**Wrong:**
-```bash
-touch tsconfig.json
-# then manually type 40 lines of config
-```
+**SQLite + Sprite** is the key insight. No database server to configure. No connection strings to manage. No external dependencies to provision. Clone, install, run.
 
-**Right:**
-```bash
-bun init
-# or
-bunx create-next-app@latest
-# or
-bunx create-vite@latest
-```
+> Projects must run immediately on checkout without issue.
 
-Use a bootstrapping tool. Always.
+This stack achieves that. No `.env` files to copy, no Docker containers to start, no cloud services to configure.
 
-### 2. Never Edit package.json Directly
+---
 
-Don't open package.json and type in dependencies. The lockfile won't update. Versions will be wrong.
+## Constraints
 
-**Wrong:**
-```json
-{
-  "dependencies": {
-    "zod": "^3.22.0"  // you typed this by hand
-  }
-}
-```
+### No External Services
 
-**Right:**
-```bash
-bun add zod
-```
+**You are forbidden from using external services unless specifically asked.**
 
-The package manager handles versions, lockfiles, and peer dependencies. Let it.
+Do NOT use:
+- Auth0, Clerk, or external auth providers
+- Supabase, PlanetScale, or external databases
+- Vercel Blob, S3, or external storage
+- SendGrid, Resend, or external email
+- Stripe (unless payment is explicitly required)
 
-### 3. Web Search Before Installing Complex Packages
+**Why:** External services require configuration, accounts, API keys, and network access. They break the "run on checkout" requirement.
 
-Some packages have setup steps, CLI tools, or configuration requirements that aren't obvious.
+**Instead:**
+- Authentication: Roll your own with sessions + Prisma
+- Database: SQLite (it's a file)
+- Storage: Local filesystem or SQLite blobs
+- Email: Log to console in dev, configure only for prod
 
-**Before installing these, search first:**
-- Prisma
-- tRPC
-- TanStack Query / Router
-- shadcn/ui
-- NextAuth / Auth.js
-- Tailwind CSS
-- ESLint / Prettier configs
-- Drizzle ORM
-- Turborepo
-- Any package with a `init` or `setup` CLI
+### GitHub for Everything
 
-**Why:** These packages often have:
-- Required peer dependencies
-- CLI initialization commands
-- Config file generation
-- Provider/wrapper setup
-- Environment variables
+Use **GitHub CLI (`gh`)** for all project management:
+- Issues for tickets
+- Projects for kanban boards
+- PRs for code review
 
-Blindly running `bun add prisma` without knowing you also need `bunx prisma init` wastes time.
+Do NOT use Jira, Linear, Notion, or other tools. Keep everything in GitHub.
 
-### 4. Biome for Formatting and Linting
+---
 
-All code must be formatted and linted with Biome. No exceptions.
+## The Process
+
+### 1. Create Next.js Project
 
 ```bash
+bunx create-next-app@latest my-app --typescript --tailwind --eslint --app --src-dir
+cd my-app
+```
+
+Accept defaults. The CLI sets up TypeScript, Tailwind, and App Router correctly.
+
+### 2. Remove ESLint, Add Biome
+
+Next.js ships with ESLint. Replace it with Biome for faster, unified formatting and linting.
+
+```bash
+# Remove ESLint
+bun remove eslint eslint-config-next
+rm .eslintrc.json
+
+# Add Biome
 bun add -d @biomejs/biome
 bunx biome init
 ```
 
-**Required scripts in package.json:**
+Update `biome.json`:
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "organizeImports": { "enabled": true },
+  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2 },
+  "linter": {
+    "enabled": true,
+    "rules": { "recommended": true }
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "single", "semicolons": "always" }
+  }
+}
+```
+
+Add scripts to `package.json`:
 
 ```json
 {
@@ -94,17 +113,107 @@ bunx biome init
 }
 ```
 
-**Must be enforced in CI.** If formatting or linting fails, the build fails.
+### 3. Set Up Prisma with SQLite
 
-### 5. Documentation with TypeDoc
+```bash
+bun add prisma --dev
+bun add @prisma/client
+bunx prisma init --datasource-provider sqlite
+```
 
-All TypeScript code must have TypeDoc-compatible documentation. Docs must compile without errors.
+This creates `prisma/schema.prisma`:
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Add your models here
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+Create the Prisma client singleton:
+
+```typescript
+// src/lib/prisma.ts
+import { PrismaClient } from '@prisma/client';
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+
+export const prisma = globalForPrisma.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+```
+
+Generate client and push schema:
+
+```bash
+bunx prisma generate
+bunx prisma db push
+```
+
+Add Prisma scripts to `package.json`:
+
+```json
+{
+  "scripts": {
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate"
+  }
+}
+```
+
+### 4. Set Up shadcn/ui
+
+```bash
+bunx shadcn@latest init
+```
+
+Choose:
+- Style: Default
+- Base color: Slate (or preference)
+- CSS variables: Yes
+
+Add common components:
+
+```bash
+bunx shadcn@latest add button card input label
+```
+
+Components are copied to `src/components/ui/`. You own them.
+
+### 5. Set Up TypeDoc
 
 ```bash
 bun add -d typedoc
 ```
 
-**Required scripts in package.json:**
+Create `typedoc.json`:
+
+```json
+{
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"],
+  "excludePrivate": true,
+  "skipErrorChecking": false
+}
+```
+
+Add scripts:
 
 ```json
 {
@@ -115,198 +224,262 @@ bun add -d typedoc
 }
 ```
 
-Create `typedoc.json` configuration:
+### 6. Set Up Testing
 
-```json
-{
-  "entryPoints": ["src/index.ts"],
-  "out": "docs",
-  "exclude": ["**/*.test.ts", "**/*.e2e.test.ts"],
-  "excludePrivate": true,
-  "skipErrorChecking": false
-}
+#### Unit Tests (Bun)
+
+Bun has a built-in test runner. No additional packages needed.
+
+Create test setup:
+
+```typescript
+// test/setup.ts
+import { beforeAll, afterAll } from 'bun:test';
+
+beforeAll(() => {
+  // Global setup
+});
+
+afterAll(() => {
+  // Global teardown
+});
 ```
 
-**Must be enforced in CI.** If docs fail to compile, the build fails.
+Configure in `bunfig.toml`:
 
-### 6. Testing Setup
+```toml
+[test]
+preload = ["./test/setup.ts"]
+```
 
-Unit tests use **bun test**. E2E tests use **Playwright**.
+Unit tests use `*.test.ts` and live **next to their source files**:
 
-**File naming conventions:**
-- Unit tests: `*.test.ts`
-- E2E tests: `*.e2e.test.ts`
+```
+src/
+├── lib/
+│   ├── utils.ts
+│   └── utils.test.ts    # Unit test here
+├── hooks/
+│   ├── use-user.ts
+│   └── use-user.test.ts # Unit test here
+```
 
-**Required scripts in package.json:**
+**Do NOT create a `tests/` directory for unit tests.**
+
+#### E2E Tests (Playwright)
+
+```bash
+bun add -d @playwright/test
+bunx playwright install
+```
+
+Create `playwright.config.ts`:
+
+```typescript
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './e2e',
+  testMatch: '**/*.spec.ts',  // NOT .e2e.test.ts - bun will pick those up!
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+  },
+  webServer: {
+    command: 'bun run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+  },
+});
+```
+
+E2E tests live in `e2e/` directory with `*.spec.ts` extension:
+
+```
+e2e/
+├── auth.spec.ts
+├── dashboard.spec.ts
+└── users.spec.ts
+```
+
+**Critical:** Do NOT use `.e2e.test.ts` extension. Bun's test runner will pick up anything with `.test.ts` and fail when it can't run Playwright tests.
+
+Add test scripts:
 
 ```json
 {
   "scripts": {
     "test": "bun test",
-    "test:unit": "bun test --test-name-pattern '.*' --preload ./test/setup.ts",
     "test:e2e": "playwright test",
     "test:all": "bun test && playwright test"
   }
 }
 ```
 
-**Playwright setup:**
+### 7. Configure .gitignore
 
-```bash
-bun add -d @playwright/test
-bunx playwright install
+Ensure these are ignored:
+
+```gitignore
+# Database
+prisma/dev.db
+prisma/dev.db-journal
+
+# Generated
+.next/
+docs/
+node_modules/
+
+# Test
+playwright-report/
+test-results/
 ```
 
-Configure `playwright.config.ts` to match only e2e files:
+### 8. Verify Everything Works
+
+```bash
+# Format and lint
+bun run check
+
+# Generate docs
+bun run docs
+
+# Run unit tests
+bun test
+
+# Push database schema
+bunx prisma db push
+
+# Start dev server
+bun run dev
+
+# In another terminal, run E2E tests
+bun run test:e2e
+```
+
+All commands must pass before writing any feature code.
+
+---
+
+## Sprite Deployment
+
+Sprite provides zero-configuration hosting with SQLite persistence.
+
+### How It Works
+
+1. SQLite database is a file (`prisma/dev.db`)
+2. Sprite persists the filesystem
+3. No database server to configure
+4. Deploy by pushing code
+
+### Deployment Checklist
+
+- [ ] SQLite database works locally
+- [ ] No external service dependencies
+- [ ] All environment variables have defaults
+- [ ] `bun run build` succeeds
+- [ ] Application starts with `bun run start`
+
+### Environment Variables
+
+For Sprite, keep configuration minimal:
 
 ```typescript
-export default defineConfig({
-  testMatch: '**/*.e2e.test.ts',
-});
+// src/lib/config.ts
+export const config = {
+  isDev: process.env.NODE_ENV !== 'production',
+  // Add only what you need, with sensible defaults
+};
 ```
 
-### 7. CI Must Check Everything
-
-Your CI pipeline must verify:
-
-- [ ] `bun run check` passes (format + lint)
-- [ ] `bun run docs` passes (TypeDoc compiles)
-- [ ] `bun run test:unit` passes
-- [ ] `bun run test:e2e` passes
-- [ ] Build succeeds
-
-**Set this up early.** The earlier you have CI enforcing standards, the less cleanup later. A broken build should block merges from day one.
+Don't require `.env` files for basic operation.
 
 ---
 
-## The Process
+## Final package.json Scripts
 
-### New Project
-
-```bash
-# 1. Bootstrap with a tool
-bunx create-next-app@latest my-app
-cd my-app
-
-# 2. Set up Biome immediately
-bun add -d @biomejs/biome
-bunx biome init
-# Add format/lint/check scripts to package.json
-
-# 3. Set up TypeDoc immediately
-bun add -d typedoc
-# Create typedoc.json config
-# Add docs scripts to package.json
-
-# 4. Set up testing immediately
-bun add -d @playwright/test
-bunx playwright install
-# Add test scripts to package.json
-# Configure playwright.config.ts for *.e2e.test.ts
-
-# 5. Set up CI
-# Add workflow that runs: check, docs, test:unit, test:e2e, build
-# Verify the build passes before moving on
-
-# 6. Search for any complex packages you need
-# "how to install shadcn ui with bun 2025"
-
-# 7. Follow the official setup
-bunx shadcn@latest init
-
-# 8. Add simple packages directly
-bun add zod dayjs nanoid
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "format": "biome format --write .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --fix .",
+    "check": "biome check --fix .",
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch",
+    "test": "bun test",
+    "test:e2e": "playwright test",
+    "test:all": "bun test && playwright test",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate"
+  }
+}
 ```
-
-**The build must pass at every step.** Don't add features on a broken foundation.
-
-### Adding to Existing Project
-
-```bash
-# Simple package - just add it
-bun add lodash-es
-
-# Complex package - search first, then follow setup
-# Search: "prisma setup bun 2025"
-bun add prisma --dev
-bun add @prisma/client
-bunx prisma init
-```
-
----
-
-## Complex Package Checklist
-
-Before installing a complex package:
-
-- [ ] Search for current setup instructions
-- [ ] Check for CLI init commands
-- [ ] Note required peer dependencies
-- [ ] Check for required config files
-- [ ] Look for provider/wrapper requirements
-- [ ] Check environment variable requirements
 
 ---
 
 ## Bootstrap Checklist
 
-When setting up a new project, verify these are in place before writing features:
+Before writing features, verify:
 
-- [ ] Project bootstrapped with a tool (not manual config)
-- [ ] Biome installed and configured
-- [ ] Format/lint/check scripts in package.json
-- [ ] TypeDoc installed and configured
-- [ ] Docs script compiles without errors
-- [ ] Bun test configured for `*.test.ts`
-- [ ] Playwright configured for `*.e2e.test.ts`
-- [ ] Test scripts differentiate unit vs e2e
-- [ ] CI pipeline runs check, docs, test:unit, test:e2e, build
-- [ ] **Build is passing**
+- [ ] Next.js project created with App Router
+- [ ] Biome installed and configured (ESLint removed)
+- [ ] Tailwind CSS working
+- [ ] Prisma + SQLite configured
+- [ ] shadcn/ui initialized
+- [ ] TypeDoc configured
+- [ ] Bun test configured with test-near-code pattern
+- [ ] Playwright configured for `e2e/*.spec.ts`
+- [ ] All scripts work: `check`, `docs`, `test`, `test:e2e`, `build`
+- [ ] Dev server starts without errors
+- [ ] **No external services required**
 
 ---
 
 ## Quick Reference
 
 ```bash
-# Bootstrap new project
-bunx create-next-app@latest
-bunx create-vite@latest
-bun init
+# Create project
+bunx create-next-app@latest my-app --typescript --tailwind --eslint --app --src-dir
+cd my-app
 
-# Add packages
-bun add <package>           # dependencies
-bun add -d <package>        # devDependencies
+# Replace ESLint with Biome
+bun remove eslint eslint-config-next && rm .eslintrc.json
+bun add -d @biomejs/biome && bunx biome init
 
-# Biome setup
-bun add -d @biomejs/biome
-bunx biome init
+# Add Prisma + SQLite
+bun add prisma --dev && bun add @prisma/client
+bunx prisma init --datasource-provider sqlite
+bunx prisma db push
 
-# TypeDoc setup
-bun add -d typedoc
-# Create typedoc.json
-
-# Testing setup
-bun add -d @playwright/test
-bunx playwright install
-
-# Run checks
-bun run check               # format + lint
-bun run docs                # compile docs
-bun run test:unit           # unit tests
-bun run test:e2e            # e2e tests
-
-# Complex packages - search first, then use their CLI
-bunx prisma init
+# Add shadcn/ui
 bunx shadcn@latest init
-bunx @tanstack/router init
-```
+bunx shadcn@latest add button card input label
 
-Never write config from scratch. Never edit package.json by hand. Search before installing anything complex. Set up linting, docs, and testing early. Keep the build green.
+# Add TypeDoc
+bun add -d typedoc
+
+# Add Playwright
+bun add -d @playwright/test && bunx playwright install
+
+# Verify
+bun run check && bun run docs && bun test && bun run build
+```
 
 ---
 
 ## Related
 
-- [Implement Ticket](./implement-ticket.md) - End-to-end process for completing a ticket (uses setup verification)
-- [Test-Driven Development](./tdd.md) - TDD workflow for bun test
-- [Pre-Push Cleanup](./cleanup.md) - Self-review before pushing
+- [Frontend Architecture](./frontend.md) - Component organization and hooks
+- [Test-Driven Development](./tdd.md) - TDD workflow with bun test
+- [Implement Ticket](./implement-ticket.md) - Using setup in ticket workflow
+- [Engineering Requirements Document](./erd.md) - Technical constraints for projects

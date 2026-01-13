@@ -20,11 +20,18 @@ Dependencies determine order, not arbitrary priority. A high-priority ticket blo
 
 ---
 
-## Prerequisites
+## GitHub CLI Required
 
-### GitHub CLI Setup
+**All tickets must be created and updated using the `gh` CLI tool.**
 
-Ensure you have the `gh` CLI installed and authenticated with project scope:
+Do NOT:
+- Create issues through the GitHub web UI
+- Use Jira, Linear, Notion, or other tools
+- Manually edit issue status in the browser
+
+**Why:** The CLI is scriptable, consistent, and keeps everything in version control workflows. It also ensures you can create tickets programmatically from ERDs.
+
+### Setup
 
 ```bash
 # Check auth status
@@ -32,7 +39,14 @@ gh auth status
 
 # Add project scope if needed
 gh auth refresh -s project
+
+# Verify you can access issues
+gh issue list
 ```
+
+---
+
+## Prerequisites
 
 ### Identify or Create the Project
 
@@ -46,7 +60,7 @@ gh project list --owner <owner>
 If no project exists, create one:
 
 ```bash
-# Create a new project in board (kanban) layout
+# Create a new project
 gh project create --owner <owner> --title "<Project Name>"
 ```
 
@@ -61,12 +75,12 @@ After creation, configure the board view in the GitHub UI:
 
 ### Step 1: Read the ERD
 
-Open the ERD (e.g., `./erd/0001.md`) and identify:
+Open the ERD (e.g., `./erd/0001-user-authentication.md`) and identify:
 
 - **Components** — Each distinct system component
 - **Requirements** — Each REQ-XXX item
-- **API endpoints** — Each route or method
-- **Data models** — Each table or schema change
+- **API endpoints** — Each route or server action
+- **Data models** — Each Prisma model or migration
 - **Dependencies** — What depends on what
 
 ### Step 2: Build the Dependency Graph
@@ -74,17 +88,17 @@ Open the ERD (e.g., `./erd/0001.md`) and identify:
 Before creating tickets, map what depends on what.
 
 ```
-Database Schema
+Prisma Schema
     ↓
-API Types/Interfaces
+Types/Interfaces
     ↓
-API Endpoints
+Server Actions / API Routes
     ↓
-Business Logic
+Hooks (data fetching)
     ↓
-UI Components
+Components
     ↓
-Integration Tests
+E2E Tests
 ```
 
 **Rule:** A ticket can only be worked on when all its dependencies are complete.
@@ -95,14 +109,14 @@ Integration Tests
 > — Humanizing Work
 
 **Wrong (horizontal slices):**
-- Ticket 1: Create database tables
-- Ticket 2: Create API endpoints
-- Ticket 3: Create UI
+- Ticket 1: Create Prisma schema
+- Ticket 2: Create API routes
+- Ticket 3: Create UI components
 
 **Right (vertical slices):**
-- Ticket 1: User can create account (DB + API + minimal UI)
-- Ticket 2: User can view profile (DB + API + UI)
-- Ticket 3: User can edit profile (API + UI)
+- Ticket 1: User can create account (schema + action + minimal UI)
+- Ticket 2: User can view profile (query + hook + component)
+- Ticket 3: User can edit profile (action + form component)
 
 Each ticket delivers working, testable functionality.
 
@@ -126,7 +140,7 @@ Each ticket should be:
 
 Use topological sort logic:
 
-1. **Foundation first** — Schema, types, shared utilities
+1. **Foundation first** — Prisma schema, types, shared utilities
 2. **Core functionality** — Primary user flows
 3. **Secondary features** — Enhancements, edge cases
 4. **Polish** — Error handling, performance, observability
@@ -137,6 +151,8 @@ Within each tier, order by:
 - Value (higher value when dependencies are equal)
 
 ### Step 6: Create Tickets with gh CLI
+
+**All tickets must be created using `gh issue create`.**
 
 Create each ticket in dependency order:
 
@@ -154,12 +170,13 @@ Depends on: None (foundation)
 - REQ-002: Unique constraint on email
 
 ## Acceptance Criteria
-- [ ] Migration creates users table
-- [ ] Migration is reversible
+- [ ] Prisma schema defines User model
+- [ ] Migration runs successfully (`bunx prisma db push`)
 - [ ] Schema matches ERD specification
 
 ## Technical Notes
 See ERD-0001 Data Model section.
+Uses SQLite with Prisma.
 EOF
 )" \
   --project "<Project Name>"
@@ -169,7 +186,21 @@ EOF
 
 Types match conventional commits: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
-### Step 7: Set Ticket Order in Project
+### Step 7: Link Related Tickets
+
+After creating tickets, link dependencies:
+
+```bash
+# Add a comment linking to blocking ticket
+gh issue comment <number> --body "Blocked by #<blocking-number>"
+
+# Or edit the body to include links
+gh issue edit <number> --body "$(gh issue view <number> --json body -q .body)
+
+Blocked by: #<blocking-number>"
+```
+
+### Step 8: Set Ticket Order in Project
 
 After creating all tickets, ensure they're ordered correctly in the Backlog column:
 
@@ -186,7 +217,7 @@ Reorder in the GitHub UI by dragging tickets in the Backlog column. The top tick
 
 ```markdown
 ## Context
-ERD: [Link to ERD]
+ERD: [Link to ERD, e.g., ERD-0001]
 PRD: [Link to PRD if applicable]
 Depends on: [List of blocking ticket numbers, or "None"]
 Blocks: [List of tickets this unblocks, or "None"]
@@ -198,15 +229,58 @@ Blocks: [List of tickets this unblocks, or "None"]
 ## Acceptance Criteria
 - [ ] [Specific, testable criterion]
 - [ ] [Another criterion]
-- [ ] Tests pass
-- [ ] Build passes
+- [ ] Unit tests pass (`bun test`)
+- [ ] E2E tests pass (`bun run test:e2e`)
+- [ ] Build passes (`bun run build`)
 
 ## Technical Notes
 [Any implementation guidance, links to relevant ERD sections]
+Stack: Next.js, Prisma, SQLite, shadcn/ui
 
 ## Out of Scope
 [What this ticket explicitly does not include]
 ```
+
+---
+
+## Updating Tickets
+
+**All ticket updates must use `gh` CLI.**
+
+```bash
+# View a ticket
+gh issue view <number>
+
+# Add a label
+gh issue edit <number> --add-label "in progress"
+
+# Remove a label
+gh issue edit <number> --remove-label "in progress"
+
+# Add a comment
+gh issue comment <number> --body "Started work on this"
+
+# Close a ticket
+gh issue close <number>
+
+# Reopen a ticket
+gh issue reopen <number>
+
+# Assign to yourself
+gh issue edit <number> --add-assignee @me
+```
+
+### Status Labels
+
+Use consistent labels across projects:
+
+| Label | Meaning |
+|-------|---------|
+| `backlog` | Not yet started |
+| `in progress` | Currently being worked on |
+| `blocked` | Waiting on dependency |
+| `ready for review` | PR submitted |
+| `done` | Completed and merged |
 
 ---
 
@@ -215,19 +289,17 @@ Blocks: [List of tickets this unblocks, or "None"]
 ### Common Dependency Chains
 
 ```
-1. Schema migrations
+1. Prisma schema migrations
    ↓
 2. Type definitions / interfaces
    ↓
-3. Data access layer (repositories)
+3. Server actions / API routes
    ↓
-4. Business logic (services)
+4. Custom hooks (useUser, useOrders)
    ↓
-5. API handlers
+5. UI components
    ↓
-6. UI components
-   ↓
-7. E2E tests
+6. E2E tests
 ```
 
 ### Breaking Circular Dependencies
@@ -268,7 +340,8 @@ When you pick up the next ticket:
 Before starting burndown:
 
 - [ ] GitHub Project exists (kanban board)
-- [ ] All tickets created from ERD requirements
+- [ ] `gh` CLI authenticated with project scope
+- [ ] All tickets created from ERD requirements using `gh issue create`
 - [ ] Each ticket has clear acceptance criteria
 - [ ] Each ticket is INVEST-compliant (especially Small and Testable)
 - [ ] Dependencies documented in each ticket
@@ -295,6 +368,18 @@ gh issue create \
   --title "feat(scope): description" \
   --body "Issue body" \
   --project "Project Name"
+
+# View issue
+gh issue view <number>
+
+# Edit issue
+gh issue edit <number> --add-label "in progress"
+
+# Comment on issue
+gh issue comment <number> --body "Update message"
+
+# Close issue
+gh issue close <number>
 
 # List project items
 gh project item-list <number> --owner <owner>

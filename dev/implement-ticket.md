@@ -13,14 +13,28 @@ Before writing any feature code, confirm the project is set up correctly. See [P
 ```bash
 bun run check      # format + lint passes
 bun run docs       # TypeDoc compiles
-bun run test:unit  # unit tests pass
+bun test           # unit tests pass
 bun run test:e2e   # e2e tests pass
 bun run build      # build succeeds
 ```
 
 **If any of these fail, fix them first.** Don't build on a broken foundation.
 
-### 2. Understand the Ticket
+### 2. Update the Ticket Status
+
+Use GitHub CLI to mark the ticket as in progress:
+
+```bash
+# View the ticket
+gh issue view <number>
+
+# Add "in progress" label or move in project
+gh issue edit <number> --add-label "in progress"
+```
+
+**All ticket operations must use `gh` CLI.** Do not update tickets through the GitHub web UI during development.
+
+### 3. Understand the Ticket
 
 Read the ticket completely. Ask questions before coding, not after.
 
@@ -39,10 +53,13 @@ Follow [Test-Driven Development](./tdd.md) principles.
 
 ### Step 1: Write a Failing Test
 
-Write a test that describes the expected behavior.
+Create the test file **next to the source file** (not in a `tests/` directory):
 
 ```typescript
-// user.test.ts
+// src/lib/users.test.ts
+import { test, expect } from 'bun:test';
+import { createUser } from './users';
+
 test('createUser returns user with generated id', () => {
   const user = createUser({ name: 'Alice', email: 'alice@example.com' });
   expect(user.id).toBeDefined();
@@ -52,19 +69,21 @@ test('createUser returns user with generated id', () => {
 
 ### Step 2: Write the Stub
 
-Create the function signature with a stub implementation.
+Create the function signature with a stub implementation:
 
 ```typescript
-// user.ts
+// src/lib/users.ts
+import type { User, CreateUserInput } from '@/types';
+
 export function createUser(input: CreateUserInput): User {
-  return { id: '', name: '', email: '' }; // stub
+  return { id: '', name: '', email: '', createdAt: new Date() }; // stub
 }
 ```
 
 ### Step 3: Verify the Test Fails Correctly
 
 ```bash
-bun run test:unit
+bun test src/lib/users.test.ts
 ```
 
 The test should fail on the **assertion**, not on infrastructure:
@@ -77,22 +96,27 @@ The test should fail on the **assertion**, not on infrastructure:
 
 ### Step 4: Implement
 
-Write the minimal code to make the test pass.
+Write the minimal code to make the test pass:
 
 ```typescript
-export function createUser(input: CreateUserInput): User {
-  return {
-    id: generateId(),
-    name: input.name,
-    email: input.email,
-  };
+// src/lib/users.ts
+import { prisma } from '@/lib/prisma';
+import type { User, CreateUserInput } from '@/types';
+
+export async function createUser(input: CreateUserInput): Promise<User> {
+  return prisma.user.create({
+    data: {
+      name: input.name,
+      email: input.email,
+    },
+  });
 }
 ```
 
 ### Step 5: Run All Tests
 
 ```bash
-bun run test:unit
+bun test
 ```
 
 Your new test should pass. But you're not done.
@@ -113,7 +137,7 @@ Your new code changed behavior that another test depends on. This is your bug to
 - Changed a function signature
 - Modified shared state
 - Altered return values
-- Changed database schema
+- Changed database schema (Prisma)
 - Updated API responses
 
 **How to fix:**
@@ -154,7 +178,7 @@ The test was failing before you started. This is still your job to fix.
 ```bash
 bun run check       # format + lint
 bun run docs        # TypeDoc compiles
-bun run test:unit   # all unit tests
+bun test            # all unit tests
 bun run test:e2e    # all e2e tests
 bun run build       # production build
 ```
@@ -177,6 +201,7 @@ Check for:
 - Missing error handling
 - Copy-pasted code that should be extracted
 - Unused variables or imports
+- Tests in wrong location (should be next to source, not in `tests/`)
 
 ### 3. Commit
 
@@ -186,11 +211,11 @@ Follow [Conventional Commits](./conventional-commits.md).
 git commit -m "$(cat <<'EOF'
 feat(users): add createUser function
 
-- src/users/user.ts: add createUser function
-- src/users/user.test.ts: add tests for createUser
+- src/lib/users.ts: add createUser function with Prisma
+- src/lib/users.test.ts: add tests for createUser
 - src/types/user.ts: add CreateUserInput interface
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -203,6 +228,58 @@ git push
 
 Watch CI. If it fails, fix it before doing anything else.
 
+### 5. Update the Ticket
+
+Use GitHub CLI to update ticket status:
+
+```bash
+# Remove in-progress, add ready-for-review
+gh issue edit <number> --remove-label "in progress" --add-label "ready for review"
+
+# Or close if complete
+gh issue close <number>
+
+# Add a comment with the PR link
+gh issue comment <number> --body "Implemented in #<pr-number>"
+```
+
+---
+
+## File Organization Reminder
+
+### Unit Tests: Next to Source
+
+```
+src/
+├── lib/
+│   ├── users.ts
+│   └── users.test.ts      # ✓ Correct
+├── hooks/
+│   ├── use-user.ts
+│   └── use-user.test.ts   # ✓ Correct
+```
+
+**NOT:**
+```
+tests/
+├── lib/
+│   └── users.test.ts      # ✗ Wrong - don't create tests/ directory
+```
+
+### E2E Tests: Dedicated Directory
+
+```
+e2e/
+├── auth.spec.ts           # ✓ Uses .spec.ts extension
+├── users.spec.ts
+```
+
+**NOT:**
+```
+e2e/
+├── auth.e2e.test.ts       # ✗ Wrong - bun will pick this up
+```
+
 ---
 
 ## The Checklist
@@ -211,15 +288,18 @@ Before marking a ticket as done:
 
 - [ ] All acceptance criteria are met
 - [ ] Tests exist for new functionality
+- [ ] Tests are next to source files (`*.test.ts`)
+- [ ] E2E tests use `*.spec.ts` in `e2e/` directory
 - [ ] `bun run check` passes
 - [ ] `bun run docs` passes
-- [ ] `bun run test:unit` passes
+- [ ] `bun test` passes
 - [ ] `bun run test:e2e` passes
 - [ ] `bun run build` passes
 - [ ] No debug statements in code
 - [ ] No commented-out code
 - [ ] Commit message follows convention
 - [ ] CI is green
+- [ ] Ticket updated via `gh` CLI
 
 ---
 
@@ -227,10 +307,12 @@ Before marking a ticket as done:
 
 ```bash
 # Before starting
-bun run check && bun run docs && bun run test:unit && bun run test:e2e && bun run build
+gh issue view <number>
+gh issue edit <number> --add-label "in progress"
+bun run check && bun run docs && bun test && bun run test:e2e && bun run build
 
 # TDD cycle
-# 1. Write test
+# 1. Write test (next to source file)
 # 2. Write stub
 # 3. Verify correct failure
 # 4. Implement
@@ -239,14 +321,17 @@ bun run check && bun run docs && bun run test:unit && bun run test:e2e && bun ru
 # After implementation
 bun run check
 bun run docs
-bun run test:unit
+bun test
 bun run test:e2e
 bun run build
 git add -A
 git diff --staged  # self-review
 git commit -m "feat(scope): description"
 git push
-# Watch CI
+
+# Update ticket
+gh issue edit <number> --remove-label "in progress"
+gh issue close <number>
 ```
 
 Tests fail? Docs broken? Fix them. All of them. Then push.
@@ -258,3 +343,5 @@ Tests fail? Docs broken? Fix them. All of them. Then push.
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - How tickets are created from ERDs
 - [Engineering Requirements Document](./erd.md) - Technical specs that define ticket requirements
 - [Product Requirements Document](../product/prd.md) - Product requirements that inform ERDs
+- [Frontend Architecture](./frontend.md) - Component and hook organization
+- [Test-Driven Development](./tdd.md) - TDD workflow details

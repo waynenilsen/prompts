@@ -63,6 +63,23 @@ As engineers dig into implementation, they'll surface questions. Add clarificati
 
 Constraints force clarity. If you can't explain it simply, you don't understand it well enough.
 
+### 6. No External Services (Default)
+
+**Projects must run immediately on checkout without configuration.**
+
+This means:
+- No Auth0, Clerk, or external auth providers
+- No Supabase, PlanetScale, or external databases
+- No S3, Vercel Blob, or external storage
+- No Stripe (unless payments are explicitly required)
+
+If your PRD requires an external service, you must:
+1. Explicitly state it as a requirement
+2. Justify why a local alternative won't work
+3. Accept the configuration burden this creates
+
+Default assumption: SQLite database, local filesystem, session-based auth.
+
 ---
 
 ## File Organization
@@ -119,6 +136,12 @@ What's the opportunity cost of waiting? What's changed that makes this urgent?
 What are we explicitly *not* doing? What's out of scope?
 
 This section is as important as the goals. It prevents scope creep and sets expectations.
+
+**Default non-goals** (unless explicitly required):
+- External authentication services
+- External database services
+- External storage services
+- External email services
 
 ### Success Criteria
 

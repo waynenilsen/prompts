@@ -11,7 +11,7 @@ You're done. Tests pass. Docs compile. Before you push, review your own work.
 Run your formatter and compile docs. Don't make reviewers comment on whitespace or broken documentation.
 
 ```bash
-bun run check      # format + lint
+bun run check      # format + lint with Biome
 bun run docs       # TypeDoc compiles
 ```
 
@@ -89,7 +89,7 @@ You called it `userData` in one place and `userInfo` in another. Pick one.
 You added the happy path. What happens when:
 - The network fails?
 - The input is null?
-- The array is empty?
+- The Prisma query returns nothing?
 
 ### Accidental Complexity
 
@@ -130,6 +130,41 @@ const config: Config = parseConfig(response);
 
 That function you wrote but never called? That variable you assigned but never read? Delete it.
 
+### Tests in Wrong Location
+
+Unit tests must be next to their source files:
+
+```
+src/
+├── lib/
+│   ├── users.ts
+│   └── users.test.ts    # ✓ Correct
+```
+
+NOT in a separate `tests/` directory:
+
+```
+tests/
+├── lib/
+│   └── users.test.ts    # ✗ Wrong
+```
+
+### E2E Tests with Wrong Extension
+
+E2E tests must use `*.spec.ts` in the `e2e/` directory:
+
+```
+e2e/
+├── auth.spec.ts         # ✓ Correct
+```
+
+NOT `*.e2e.test.ts` (bun will pick these up):
+
+```
+e2e/
+├── auth.e2e.test.ts     # ✗ Wrong - bun will try to run this
+```
+
 ### Missing or Broken Documentation
 
 New public functions need TypeDoc comments. If `bun run docs` fails, fix it before pushing.
@@ -148,6 +183,44 @@ export function processOrder(order: Order): Receipt {
 export function processOrder(order: Order): Receipt {
 ```
 
+### External Service References
+
+Did you accidentally add an external service dependency?
+
+```typescript
+// Wrong - external service
+import { createClient } from '@supabase/supabase-js';
+
+// Wrong - external auth
+import { auth0 } from 'auth0';
+
+// Right - local Prisma
+import { prisma } from '@/lib/prisma';
+```
+
+If you need an external service, it must be explicitly approved in the PRD.
+
+### Hooks Not Extracted
+
+Business logic should be in hooks, not components:
+
+```typescript
+// Before: logic in component
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    fetch(`/api/users/${userId}`).then(r => r.json()).then(setUser);
+  }, [userId]);
+  // ...
+}
+
+// After: hook extracted (and testable)
+function UserProfile({ userId }) {
+  const { user, isLoading } = useUser(userId);
+  // ...
+}
+```
+
 ---
 
 ## The Checklist
@@ -156,6 +229,9 @@ Before pushing:
 
 - [ ] Code is formatted (`bun run check`)
 - [ ] Docs compile (`bun run docs`)
+- [ ] Unit tests pass (`bun test`)
+- [ ] E2E tests pass (`bun run test:e2e`)
+- [ ] Build succeeds (`bun run build`)
 - [ ] No console.log / debugger / print statements
 - [ ] No commented-out code
 - [ ] No copy-pasted blocks (DRY)
@@ -166,6 +242,10 @@ Before pushing:
 - [ ] No unrelated changes in the diff
 - [ ] Every function/variable is actually used
 - [ ] Public APIs have TypeDoc comments
+- [ ] Unit tests are next to source files (`*.test.ts`)
+- [ ] E2E tests use `*.spec.ts` in `e2e/`
+- [ ] No external service dependencies added
+- [ ] Hooks extracted for testable logic
 
 ---
 
@@ -188,6 +268,13 @@ Your reviewer's time is valuable. Don't waste it on things you could have caught
 bun run check
 bun run docs
 
+# Run tests
+bun test
+bun run test:e2e
+
+# Build
+bun run build
+
 # Stage
 git add -A
 
@@ -207,3 +294,4 @@ Read your diff. Fix what you find. Compile docs. Then push.
 - [Implement Ticket](./implement-ticket.md) - Full ticket workflow that ends with cleanup
 - [Conventional Commits](./conventional-commits.md) - Commit message format after cleanup
 - [Test-Driven Development](./tdd.md) - TDD workflow before cleanup
+- [Frontend Architecture](./frontend.md) - Hook extraction patterns
