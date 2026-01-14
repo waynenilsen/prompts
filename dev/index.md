@@ -26,6 +26,7 @@ Developer guides and conventions for this project.
 - [Conventional Commits](./conventional-commits.md) - Commit message format and best practices
 - [Test-Driven Development](./tdd.md) - TDD with bun test, test-near-code pattern
 - [Pre-Push Cleanup](./cleanup.md) - Self-review before pushing
+- [Authentication](./auth.md) - Authentication patterns and guidelines
 
 ## Key Constraints
 

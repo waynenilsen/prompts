@@ -25,3 +25,4 @@ Opinionated development workflow prompts for building zero-configuration deploya
 
 - [./dev](./dev/index.md) - Development guidelines and conventions
 - [./product](./product/index.md) - Product planning and requirements
+- [./promptgrams](./promptgrams/index.md) - Structured workflow prompts
