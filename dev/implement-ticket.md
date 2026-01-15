@@ -49,6 +49,7 @@ This is not optional. Moving the ticket signals to the team that work has begun 
 
 If working on authentication, read [Authentication](./auth.md) first.
 If working on API endpoints, read [tRPC](./trpc.md) first. **Never use Server Actions** (except rare cookie writes in auth flows).
+If working on database schema changes, read [Database Schema and Migrations](./db.md) first. **Schema changes MUST include migrations in the same commit.**
 If instructed to serviceize Ralph, read [Ralph Service Mode](./auth.md#ralph-service-mode-systemd) first.
 
 ### 4. Understand the Ticket
@@ -466,6 +467,7 @@ Tests fail? Docs broken? Fix them. All of them. Then push.
 
 - [tRPC](./trpc.md) - End-to-end type-safe APIs, never use Server Actions
 - [Authentication](./auth.md) - Email/password auth, session management, no RLS
+- [Database Schema and Migrations](./db.md) - Schema changes and migration management
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - How tickets are created from ERDs
 - [Engineering Requirements Document](./erd.md) - Technical specs that define ticket requirements

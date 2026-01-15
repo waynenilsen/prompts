@@ -247,6 +247,23 @@ function UserProfile({ userId }) {
 }
 ```
 
+### Schema Changes Without Migrations
+
+**NEVER commit schema changes without the corresponding migration.**
+
+```bash
+# WRONG: Schema without migration
+git add prisma/user.prisma
+git commit -m "feat(db): add user table"
+# Missing: prisma/migrations/
+
+# RIGHT: Schema and migration together
+git add prisma/user.prisma prisma/migrations/20240101000000_add_user_table/
+git commit -m "feat(db): add user table schema and migration"
+```
+
+**Why:** Schema changes without migrations cause database drift, break other developers' environments, and cause deployment failures. See [Database Schema and Migrations](./db.md) for complete guidelines.
+
 ---
 
 ## The Checklist
@@ -274,6 +291,7 @@ Before pushing:
 - [ ] All APIs use tRPC
 - [ ] No external service dependencies added
 - [ ] Hooks extracted for testable logic
+- [ ] Schema changes include migrations in same commit (see [Database Schema and Migrations](./db.md))
 
 ---
 
@@ -320,6 +338,7 @@ Read your diff. Fix what you find. Compile docs. Then push.
 ## Related
 
 - [tRPC](./trpc.md) - API patterns (never use Server Actions)
+- [Database Schema and Migrations](./db.md) - Schema changes and migration management
 - [Implement Ticket](./implement-ticket.md) - Full ticket workflow that ends with cleanup
 - [Conventional Commits](./conventional-commits.md) - Commit message format after cleanup
 - [Test-Driven Development](./tdd.md) - TDD workflow before cleanup

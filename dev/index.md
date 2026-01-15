@@ -20,6 +20,7 @@ Developer guides and conventions for this project.
 - [Project Setup](./setup.md) - Bootstrap projects with the full stack
 - [tRPC](./trpc.md) - End-to-end type-safe APIs with tRPC and TanStack Query
 - [Email](./email.md) - React Email templates, Mailhog dev server, SendGrid production
+- [Database Schema and Migrations](./db.md) - Schema changes and migration management
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Frontend Architecture](./frontend.md) - Component organization, hooks, shadcn/ui patterns
 - [Engineering Requirements Document](./erd.md) - Technical specs and design docs

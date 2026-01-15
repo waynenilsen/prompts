@@ -278,6 +278,8 @@ export const userRouter = router({
 
 We use **multi-file Prisma schemas** — one file per domain. See [Project Setup](./setup.md) for full details.
 
+**CRITICAL:** When breaking down tickets, separate out creation of the database schema AND migration. There must be exactly ONE ticket that demands changes to schema files, and that commit must include both the schema changes AND the corresponding migration. See [Database Schema and Migrations](./db.md) for complete guidelines.
+
 ```
 prisma/
 ├── schema.prisma       # Generator + datasource only
@@ -415,6 +417,7 @@ Before requesting review:
 - [Tech Debt ERD](./tech-debt-erd.md) - Detailed technical specification for tech debt remediation
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - Break down ERDs into actionable tickets
 - [Implement Ticket](./implement-ticket.md) - Process for completing tickets
+- [Database Schema and Migrations](./db.md) - Schema changes and migration management
 - [Project Setup](./setup.md) - Stack configuration details
 
 ---

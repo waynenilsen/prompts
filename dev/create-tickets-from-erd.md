@@ -83,6 +83,8 @@ Open the ERD (e.g., `./erd/0001-user-authentication.md`) and identify:
 - **Data models** — Each Prisma model or migration
 - **Dependencies** — What depends on what
 
+**CRITICAL:** When breaking down tickets, separate out creation of the database schema AND migration. There must be exactly ONE ticket that demands changes to schema files, and that commit must include both the schema changes AND the corresponding migration. See [Database Schema and Migrations](./db.md) for complete guidelines.
+
 ### Step 2: Build the Dependency Graph
 
 Before creating tickets, map what depends on what.
@@ -393,6 +395,7 @@ gh project item-add <number> --owner <owner> --url <issue-url>
 ## Related
 
 - [tRPC](./trpc.md) - API patterns (never use Server Actions)
+- [Database Schema and Migrations](./db.md) - Schema changes and migration management
 - [Engineering Requirements Document](./erd.md) - How to write ERDs
 - [Product Requirements Document](../product/prd.md) - Product requirements that inform ERDs
 - [Implement Ticket](./implement-ticket.md) - Process for completing tickets

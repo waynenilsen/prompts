@@ -112,6 +112,9 @@ Coverage reports will show gaps. Address them systematically.
 - Missing TypeDoc comments on public APIs
 - Business logic in components instead of hooks
 - Hardcoded values instead of constants
+- Schema changes committed without migrations
+- Migrations committed without schema changes
+- Schema and migration split across multiple commits
 
 **Remediation:**
 
@@ -121,6 +124,7 @@ Coverage reports will show gaps. Address them systematically.
 - Add TypeDoc comments (see [Pre-Push Cleanup](./cleanup.md))
 - Extract hooks from components (see [Frontend Architecture](./frontend.md))
 - Extract constants from magic numbers
+- Ensure schema changes and migrations are committed together (see [Database Schema and Migrations](./db.md))
 
 #### Security Vulnerabilities
 
@@ -536,4 +540,5 @@ Before requesting review:
 - [Unit Testing](./unit-testing.md) - Testing patterns and coverage thresholds
 - [tRPC Guide](./trpc.md) - API patterns (never use Server Actions)
 - [Frontend Architecture](./frontend.md) - Component and hook organization
+- [Database Schema and Migrations](./db.md) - Schema changes and migration management
 - [Implement Ticket](./implement-ticket.md) - Process for completing tickets
