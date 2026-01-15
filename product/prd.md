@@ -95,6 +95,9 @@ prd/
 ├── 0001-user-authentication.md
 ├── 0002-payment-processing.md
 ├── 0003-notification-system.md
+├── 0004-feature-x.md
+├── 0005-tech-debt-reduction.md  # Tech debt cycle
+├── 0006-feature-y.md
 └── ...
 ```
 
@@ -103,6 +106,11 @@ prd/
 - Followed by hyphen and kebab-case description
 - Sequential numbers, never reused
 - Reference in commits, PRs, and ERDs as `PRD-0001`
+
+**Tech Debt Cycles:**
+- **When the PRD number ends in 5 or 0** (e.g., `0005`, `0010`, `0015`, `0020`), use the [Tech Debt PRD template](./tech-debt-prd.md) instead of the standard template
+- Tech debt PRDs are intentionally minimal and link to the corresponding tech debt ERD
+- This ensures regular cycles dedicated to paying down technical debt
 
 Each PRD may have a corresponding ERD (Engineering Requirements Document) in `./erd/` with the same number. See the [ERD guide](../dev/erd.md) for how to write ERDs.
 
@@ -262,6 +270,8 @@ Before sharing a PRD:
 ## Related
 
 - [Engineering Requirements Document](../dev/erd.md) - Technical counterpart to the PRD
+- [Tech Debt PRD](./tech-debt-prd.md) - Minimal template for tech debt reduction cycles
+- [Tech Debt ERD](../dev/tech-debt-erd.md) - Detailed technical specification for tech debt remediation
 - [Create Tickets from ERD](../dev/create-tickets-from-erd.md) - Break down ERDs into actionable tickets
 
 ---

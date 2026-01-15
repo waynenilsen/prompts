@@ -80,6 +80,9 @@ erd/
 ├── 0001-user-authentication.md
 ├── 0002-payment-processing.md
 ├── 0003-notification-system.md
+├── 0004-feature-x.md
+├── 0005-tech-debt-reduction.md  # Tech debt cycle
+├── 0006-feature-y.md
 └── ...
 ```
 
@@ -88,6 +91,11 @@ erd/
 - Followed by hyphen and kebab-case description
 - Sequential numbers, never reused
 - Reference in commits and PRs as `ERD-0001`
+
+**Tech Debt Cycles:**
+- **When the ERD number ends in 5 or 0** (e.g., `0005`, `0010`, `0015`, `0020`), use the [Tech Debt ERD template](./tech-debt-erd.md) instead of the standard template
+- Tech debt ERDs focus on identifying and remediating technical debt: code duplication, missing test coverage, and misalignment with prompts folder directives
+- This ensures regular cycles dedicated to paying down technical debt
 
 Each ERD should link to its corresponding PRD when applicable. See the [PRD guide](../product/prd.md) for how to write PRDs.
 
@@ -403,6 +411,8 @@ Before requesting review:
 ## Related
 
 - [Product Requirements Document](../product/prd.md) - Product counterpart to the ERD
+- [Tech Debt PRD](../product/tech-debt-prd.md) - Minimal PRD template for tech debt cycles
+- [Tech Debt ERD](./tech-debt-erd.md) - Detailed technical specification for tech debt remediation
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - Break down ERDs into actionable tickets
 - [Implement Ticket](./implement-ticket.md) - Process for completing tickets
 - [Project Setup](./setup.md) - Stack configuration details
