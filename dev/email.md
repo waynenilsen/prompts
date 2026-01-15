@@ -285,6 +285,46 @@ const footer = {
 };
 ```
 
+### Links and URLs
+
+**Critical: All links in emails must use absolute URLs (full base URL).**
+
+Emails are viewed in external email clients (Gmail, Outlook, Apple Mail, etc.), not within your application. Relative paths like `/login` or `./reset` will not work—they'll resolve relative to the email client, not your domain.
+
+Always use the full base URL:
+
+```typescript
+// ❌ Wrong - relative path
+<Button href="/login">Login</Button>
+
+// ✅ Right - absolute URL
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.example.com';
+<Button href={`${baseUrl}/login`}>Login</Button>
+```
+
+When sending emails, construct URLs using your application's base URL:
+
+```typescript
+// src/server/routers/auth.ts
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.example.com';
+
+await sendEmail({
+  to: user.email,
+  subject: 'Welcome!',
+  template: (
+    <WelcomeEmail 
+      name={user.name} 
+      loginUrl={`${baseUrl}/login`}
+      resetUrl={`${baseUrl}/reset?token=${token}`}
+    />
+  ),
+});
+```
+
+Set `NEXT_PUBLIC_BASE_URL` in your environment variables (the `NEXT_PUBLIC_` prefix makes it available to both server and client):
+- **Local:** `NEXT_PUBLIC_BASE_URL=http://localhost:3000`
+- **Production:** `NEXT_PUBLIC_BASE_URL=https://yourdomain.com`
+
 ### Sending the Email
 
 **Use tRPC, not Server Actions.** See [tRPC Guide](./trpc.md) for complete patterns.
@@ -295,6 +335,8 @@ import { z } from 'zod';
 import { router, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/lib/email';
 import { WelcomeEmail } from '@/emails/welcome';
+
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.example.com';
 
 export const authRouter = router({
   register: publicProcedure
@@ -312,7 +354,7 @@ export const authRouter = router({
       await sendEmail({
         to: user.email,
         subject: 'Welcome to Our App!',
-        template: <WelcomeEmail name={user.name} loginUrl="https://app.example.com/login" />,
+        template: <WelcomeEmail name={user.name} loginUrl={`${baseUrl}/login`} />,
       });
 
       return user;
@@ -426,9 +468,12 @@ For production (Sprite), set these environment variables:
 
 ```bash
 STAGE=production
+NEXT_PUBLIC_BASE_URL=https://yourdomain.com
 SENDGRID_API_KEY=SG.xxx...
 EMAIL_FROM=noreply@yourdomain.com
 ```
+
+**Important:** `NEXT_PUBLIC_BASE_URL` is required for all email links to work correctly. Without it, relative paths in emails will break when viewed in external email clients. The `NEXT_PUBLIC_` prefix makes it available to both server-side (for email generation) and client-side code.
 
 ### SendGrid Setup
 
@@ -533,6 +578,8 @@ Before shipping email functionality:
 - [ ] Mailhog running locally (`docker compose up -d`)
 - [ ] Test emails visible in Mailhog web UI
 - [ ] Unit tests pass with `STAGE=test`
+- [ ] All email links use absolute URLs (via `NEXT_PUBLIC_BASE_URL`)
+- [ ] `NEXT_PUBLIC_BASE_URL` configured for production
 - [ ] `EMAIL_FROM` configured for production
 - [ ] SendGrid API key set for production
 - [ ] Sender domain verified in SendGrid
@@ -563,10 +610,12 @@ STAGE=local bun run scripts/send-test-email.ts
 import { sendEmail } from '@/lib/email';
 import { WelcomeEmail } from '@/emails/welcome';
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.example.com';
+
 await sendEmail({
   to: 'user@example.com',
   subject: 'Welcome!',
-  template: <WelcomeEmail name="User" loginUrl="https://app.example.com" />,
+  template: <WelcomeEmail name="User" loginUrl={`${baseUrl}/login`} />,
 });
 ```
 
