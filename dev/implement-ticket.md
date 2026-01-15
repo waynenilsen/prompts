@@ -18,6 +18,15 @@ bun run test:e2e   # e2e tests pass
 bun run build      # build succeeds
 ```
 
+**CRITICAL: If running in a Ralph loop and any of these fail, your job is to get the tests running.**
+
+If foundation verification fails while in a Ralph loop:
+
+- **Do not ignore test failures** — they must be fixed before proceeding
+- **Consider environmental factors** — missing dependencies, incorrect Node/Bun versions, database not initialized, environment variables not set, port conflicts, etc.
+- **Get the tests working** — this becomes your primary task. Do not proceed with ticket work until the foundation is solid
+- **Investigate systematically** — check error messages, verify setup steps from [Project Setup](./setup.md), ensure all prerequisites are met
+
 **If any of these fail, fix them first.** Don't build on a broken foundation.
 
 ### 2. Move the Ticket to In Progress
@@ -181,6 +190,100 @@ The test was failing before you started. This is still your job to fix.
 ### The Rule
 
 **If a test is failing when you run the suite, fix it.** It doesn't matter who broke it or when. A green build is required to merge.
+
+---
+
+## Documenting Problem-Solving Insights
+
+When you encounter a difficult problem and have an "ah-ha" moment after multiple attempts, document it for future reference.
+
+### Before Tackling an Issue
+
+**Search the notes directory first:**
+
+```bash
+# Search notes for related issues
+ls -la ./notes/ | grep -i <keyword>
+# Or read through notes if you're dealing with a similar problem
+```
+
+Previous notes may contain solutions to problems you're facing.
+
+### When to Document
+
+If you:
+
+- Struggled with a problem for multiple rounds
+- Had a breakthrough "ah-ha" moment
+- Discovered a non-obvious solution or workaround
+- Found an environmental factor that caused issues
+
+### How to Document
+
+Create a note in the `./notes/` directory:
+
+**File naming format:** `<iso-date-time-with-filename-friendly-format>-<kebab-file-title>.md`
+
+Example: `2024-01-15T14-30-00-turbopack-workspace-root-error.md`
+
+**File content should include:**
+
+```markdown
+# <Problem Title>
+
+## Problem
+
+Describe what you were trying to do and what went wrong.
+
+## Symptoms
+
+- Error messages you saw
+- Unexpected behavior
+- What wasn't working
+
+## Root Cause
+
+What was actually causing the problem (the "ah-ha" moment).
+
+## Solution
+
+Step-by-step how you fixed it.
+
+## Prevention
+
+How to avoid this in the future, or what to check first.
+```
+
+### Example
+
+```markdown
+# Turbopack Workspace Root Error
+
+## Problem
+
+Next.js dev server failing with "Next.js inferred your workspace root, but it may not be correct" error.
+
+## Symptoms
+
+- `bun dev` fails immediately
+- Error mentions workspace root detection
+- Project structure looks correct
+
+## Root Cause
+
+Next.js was running from a subdirectory, causing it to look for `next/package.json` in the wrong location.
+
+## Solution
+
+1. Verified we're in the project root (not a subdirectory)
+2. Checked `next.config.js` for `turbopack.root` setting
+3. Ensured `package.json` is in the root directory
+4. Restarted dev server from correct location
+
+## Prevention
+
+Always run `bun dev` from the project root where `package.json` exists.
+```
 
 ---
 
