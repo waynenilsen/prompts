@@ -62,6 +62,63 @@ databases/
 
 ---
 
+## Critical Rule: All Tables Must Use CUID for IDs
+
+**ALL tables MUST use `cuid()` for their primary key `id` field.**
+
+### The Rule
+
+Every model's `id` field must be defined as:
+
+```prisma
+id String @id @default(cuid())
+```
+
+**Never use:**
+- `@default(uuid())` - Use cuid instead
+- `@default(autoincrement())` - Not suitable for distributed systems
+- `Int @id @default(autoincrement())` - Sequential IDs leak information
+
+### Why CUID
+
+- **URL-safe:** Can be used directly in URLs without encoding
+- **Collision-resistant:** Designed for distributed systems
+- **Sortable:** Contains timestamp information for rough chronological ordering
+- **Non-sequential:** Doesn't leak information about record count or creation order
+
+### Example
+
+```prisma
+// ✅ Correct - All models use cuid
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  authorId  String
+  createdAt DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+}
+```
+
+**Exception:** Join tables (many-to-many relations) may use composite keys without an explicit `id` field, but if they have an `id` field, it must use `cuid()`.
+
+---
+
 ## The Workflow
 
 ### Step 1: Modify Schema Files
@@ -257,6 +314,7 @@ git commit -m "feat(db): add user-post relation schema and migration"
 Before committing schema changes:
 
 - [ ] Schema file(s) modified (`prisma/*.prisma`)
+- [ ] **All models use `id String @id @default(cuid())` for primary keys**
 - [ ] Migration created (`bunx prisma migrate dev --name <name>`)
 - [ ] Migration file exists (`prisma/migrations/<timestamp>_<name>/migration.sql`)
 - [ ] Migration runs successfully (`bunx prisma migrate dev`)
