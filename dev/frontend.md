@@ -227,6 +227,7 @@ bunx shadcn@latest add dialog
 - Never modify `components/ui/` files directly (regeneration overwrites)
 - Wrap shadcn components if you need custom behavior
 - Use the `cn()` utility for conditional classes
+- **Customize freely, but preserve patterns** — When creating custom components or wrapping shadcn components, you MUST carry over CVA (Class Variance Authority) patterns and other architectural patterns from shadcn
 
 ```typescript
 // components/ui/button.tsx is generated
@@ -248,6 +249,158 @@ export function SubmitButton({ isLoading, children }: SubmitButtonProps) {
   );
 }
 ```
+
+**Custom Component Example (with CVA):**
+
+```typescript
+// components/feature-button.tsx - Custom component preserving shadcn patterns
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+const featureButtonVariants = cva("base-classes-here", {
+  variants: {
+    variant: {
+      default: "default-variant-classes",
+      premium: "premium-variant-classes",
+    },
+    size: {
+      sm: "small-size-classes",
+      lg: "large-size-classes",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "sm",
+  },
+});
+
+interface FeatureButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof featureButtonVariants> {
+  // Additional props
+}
+
+export function FeatureButton({
+  className,
+  variant,
+  size,
+  ...props
+}: FeatureButtonProps) {
+  return (
+    <Button
+      className={cn(featureButtonVariants({ variant, size }), className)}
+      {...props}
+    />
+  );
+}
+```
+
+---
+
+## Styling and Theming
+
+### Semantic Colors Only
+
+**CRITICAL: Retheming is a core requirement. Absolutely NO hardcoded colors.**
+
+All colors must use semantic color tokens from shadcn/ui's CSS variables. These are defined in your `globals.css` and can be changed globally for retheming.
+
+**Wrong:**
+
+```typescript
+// ❌ NEVER do this
+<div className="bg-blue-500 text-white border-red-600">
+  <span style={{ color: "#ff0000" }}>Error</span>
+</div>
+```
+
+**Right:**
+
+```typescript
+// ✅ Use semantic colors
+<div className="bg-primary text-primary-foreground border-destructive">
+  <span className="text-destructive">Error</span>
+</div>
+```
+
+### Available Semantic Colors
+
+shadcn/ui provides these semantic color tokens:
+
+- `background` / `foreground` — Base page colors
+- `card` / `card-foreground` — Card backgrounds and text
+- `popover` / `popover-foreground` — Popover/dropdown colors
+- `primary` / `primary-foreground` — Primary actions
+- `secondary` / `secondary-foreground` — Secondary actions
+- `muted` / `muted-foreground` — Muted/subdued content
+- `accent` / `accent-foreground` — Accent highlights
+- `destructive` / `destructive-foreground` — Errors, deletions
+- `border` — Borders and dividers
+- `input` — Input backgrounds
+- `ring` — Focus rings
+
+### Adding Custom Semantic Colors
+
+If you need additional semantic colors beyond shadcn's defaults, add them to your `globals.css` CSS variables (for the theme system), then use Tailwind utilities:
+
+```css
+/* globals.css - Only define CSS variables here */
+@layer base {
+  :root {
+    /* ... existing shadcn colors ... */
+
+    /* Custom semantic colors */
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 89%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 355 100% 97%;
+  }
+}
+```
+
+```typescript
+// ✅ Use Tailwind utilities in components
+<div className="bg-warning text-warning-foreground">Warning message</div>
+```
+
+**CRITICAL Rules:**
+
+- **NO custom CSS classes** — Use Tailwind utilities only. All styling must be done through Tailwind classes.
+- **NO inline styles** — Use Tailwind classes instead of `style={{}}` props.
+- **All colors must be semantic tokens** — Never use Tailwind color utilities like `bg-blue-500` or hex codes like `#ff0000` directly in components. Use semantic tokens like `bg-primary`, `bg-destructive`, etc.
+- **CSS variables only in `globals.css`** — The only CSS you write is CSS variable definitions in `globals.css` for the theme system. All component styling uses Tailwind.
+
+### Component Customization
+
+You can and should customize shadcn components for your visual needs, but:
+
+1. **Preserve CVA patterns** — Use `class-variance-authority` for variant-based styling
+2. **Use semantic colors** — Reference CSS variables, not hardcoded colors
+3. **Maintain composability** — Keep the same prop patterns (variant, size, etc.)
+4. **Extend, don't replace** — Build on top of shadcn components when possible
+
+```typescript
+// ✅ Good: Custom component with CVA and semantic colors (using Tailwind)
+import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+
+const statusBadgeVariants = cva(
+  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+  {
+    variants: {
+      status: {
+        success: "bg-success text-success-foreground",
+        warning: "bg-warning text-warning-foreground",
+        error: "bg-destructive text-destructive-foreground",
+      },
+    },
+  }
+);
+```
+
+**Remember:** All styling uses Tailwind classes. No custom CSS classes, no inline styles. CSS variables in `globals.css` are only for theme definitions.
 
 ---
 
@@ -422,6 +575,9 @@ Before adding a new feature:
 - [ ] Pages conditionally render based on auth state (see [Authentication](./auth.md#conditional-routing-and-redirects))
 - [ ] Auth pages redirect if already logged in
 - [ ] Navigation conditionally shows auth buttons
+- [ ] **NO hardcoded colors** — Only semantic color tokens (e.g., `bg-primary`, `text-destructive`)
+- [ ] Custom components preserve CVA patterns and shadcn architectural patterns
+- [ ] All colors reference CSS variables for retheming support
 
 ---
 
