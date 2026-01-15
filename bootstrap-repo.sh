@@ -437,6 +437,8 @@ EOF
 cat > playwright.config.ts << EOF
 import { defineConfig } from '@playwright/test';
 
+const isTty = process.stdout.isTTY;
+
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.e2e.ts',
@@ -444,7 +446,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: isTty ? [['html', { open: 'never' }]] : [['line']],
   use: {
     baseURL: 'http://localhost:${DEV_PORT}',
     trace: 'on-first-retry',

@@ -205,6 +205,63 @@ Use `resource:action` format:
 
 ---
 
+## Ralph Service Mode (systemd)
+
+When instructed to serviceize Ralph with systemd, the service must run with the same `bashrc` and in the project working directory. This is critical because Ralph relies on local tools (`gh`, `jq`, `claude`, `bun`, `node`) and repo-relative paths. systemd does not load your shell environment, and it does not set the working directory unless you tell it to.
+
+### Footguns to avoid
+
+- **No shell init**: systemd does not read `.bashrc`/`.zshrc`; PATH and tool shims will be missing.
+- **Wrong working directory**: default is `/`; relative paths and `git` commands will fail.
+- **No TTY**: interactive tools or prompts can hang or error.
+- **Wrong HOME**: auth tokens (`gh`, `claude`) and config live under `$HOME`.
+- **Missing environment**: `.env`, `.tool-versions`, asdf/volta, bun install paths, etc.
+- **No SSH agent**: git/gh commands may fail if they require agent-based auth.
+
+### Systemd unit (safe defaults)
+
+Use absolute paths. Ensure the user and working directory match the repo.
+
+```ini
+# /etc/systemd/system/ralph.service
+[Unit]
+Description=Ralph prompt loop
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USER
+Group=YOUR_GROUP
+WorkingDirectory=/absolute/path/to/repo
+
+# Ensure HOME and PATH are correct for toolchains and auth
+Environment=HOME=/home/YOUR_USER
+Environment=PATH=/home/YOUR_USER/.bun/bin:/home/YOUR_USER/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+# Force bashrc to load and pin working directory
+ExecStart=/bin/bash -lc 'source ~/.bashrc; cd /absolute/path/to/repo; ./loop.sh'
+Restart=on-failure
+RestartSec=3
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Enable
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now ralph.service
+sudo systemctl status ralph.service
+```
+
+**Rule:** If the service cannot run the exact same CLI toolchain as your interactive shell, do not serviceize it until that is fixed.
+
+---
+
 ## Checklist
 
 When implementing auth:

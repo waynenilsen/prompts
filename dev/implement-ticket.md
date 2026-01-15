@@ -39,6 +39,7 @@ This is not optional. Moving the ticket signals to the team that work has begun 
 ### 3. Check Domain-Specific Guides
 
 If working on authentication, read [Authentication](./auth.md) first.
+If instructed to serviceize Ralph, read [Ralph Service Mode](./auth.md#ralph-service-mode-systemd) first.
 
 ### 4. Understand the Ticket
 

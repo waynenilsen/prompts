@@ -6,15 +6,15 @@ The opinionated stack for zero-configuration deployable applications.
 
 ## The Stack
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Framework | Next.js | Full-stack React, App Router, Server Actions |
-| Styling | Tailwind CSS | Utility-first, no CSS files to manage |
-| Components | shadcn/ui | Copy-paste components you own |
-| Database | Prisma + SQLite | Type-safe ORM, zero-config database |
-| Email | React Email + Mailhog/SendGrid | Beautiful templates, local dev server, production-ready |
-| Runtime | Bun | Fast, built-in test runner |
-| Hosting | Sprite | Zero-config deployment with SQLite persistence |
+| Layer      | Technology                     | Why                                                     |
+| ---------- | ------------------------------ | ------------------------------------------------------- |
+| Framework  | Next.js                        | Full-stack React, App Router, Server Actions            |
+| Styling    | Tailwind CSS                   | Utility-first, no CSS files to manage                   |
+| Components | shadcn/ui                      | Copy-paste components you own                           |
+| Database   | Prisma + SQLite                | Type-safe ORM, zero-config database                     |
+| Email      | React Email + Mailhog/SendGrid | Beautiful templates, local dev server, production-ready |
+| Runtime    | Bun                            | Fast, built-in test runner                              |
+| Hosting    | Sprite                         | Zero-config deployment with SQLite persistence          |
 
 ### Why This Stack
 
@@ -33,6 +33,7 @@ This stack achieves that. No `.env` files to copy, no Docker containers to start
 **You are forbidden from using external services unless specifically asked.**
 
 Do NOT use:
+
 - Auth0, Clerk, or external auth providers
 - Supabase, PlanetScale, or external databases
 - Vercel Blob, S3, or external storage
@@ -42,6 +43,7 @@ Do NOT use:
 **Why:** External services require configuration, accounts, API keys, and network access. They break the "run on checkout" requirement.
 
 **Instead:**
+
 - Authentication: Roll your own with sessions + Prisma
 - Database: SQLite (it's a file)
 - Storage: Local filesystem or SQLite blobs
@@ -50,6 +52,7 @@ Do NOT use:
 ### GitHub for Everything
 
 Use **GitHub CLI (`gh`)** for all project management:
+
 - Issues for tickets
 - Projects for kanban boards
 - PRs for code review
@@ -197,13 +200,13 @@ Tell Prisma to use the directory (required for multi-file):
 
 ```typescript
 // src/lib/prisma.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 export const prisma = globalForPrisma.prisma || new PrismaClient();
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 ```
 
 #### Generate and Push
@@ -226,6 +229,7 @@ bunx prisma db push
 ```
 
 **Key constraints:**
+
 - `schema.prisma` must be at `prisma/schema.prisma` (not in a subdirectory)
 - `migrations/` must be at `prisma/migrations/`
 - All `.prisma` files must be in the same `prisma/` directory
@@ -237,6 +241,7 @@ bunx shadcn@latest init
 ```
 
 Choose:
+
 - Style: Default
 - Base color: Slate (or preference)
 - CSS variables: Yes
@@ -276,20 +281,20 @@ The email service abstraction:
 
 ```typescript
 // src/lib/email.ts
-import { render } from '@react-email/components';
-import nodemailer from 'nodemailer';
-import sgMail from '@sendgrid/mail';
+import { render } from "@react-email/components";
+import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 
-const STAGE = process.env.STAGE || 'local';
+const STAGE = process.env.STAGE || "local";
 
 // Configure SendGrid for production
-if (STAGE === 'production' && process.env.SENDGRID_API_KEY) {
+if (STAGE === "production" && process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
 // Mailhog transporter for local development
 const mailhogTransport = nodemailer.createTransport({
-  host: 'localhost',
+  host: "localhost",
   port: Number(process.env.MAILHOG_SMTP_PORT) || 1025,
   secure: false,
 });
@@ -301,11 +306,16 @@ interface SendEmailOptions {
   from?: string;
 }
 
-export async function sendEmail({ to, subject, template, from }: SendEmailOptions) {
+export async function sendEmail({
+  to,
+  subject,
+  template,
+  from,
+}: SendEmailOptions) {
   const html = await render(template);
-  const defaultFrom = process.env.EMAIL_FROM || 'noreply@example.com';
+  const defaultFrom = process.env.EMAIL_FROM || "noreply@example.com";
 
-  if (STAGE === 'production') {
+  if (STAGE === "production") {
     await sgMail.send({
       to,
       from: from || defaultFrom,
@@ -327,7 +337,14 @@ Create email templates in `src/emails/`:
 
 ```typescript
 // src/emails/welcome.tsx
-import { Html, Head, Body, Container, Text, Button } from '@react-email/components';
+import {
+  Html,
+  Head,
+  Body,
+  Container,
+  Text,
+  Button,
+} from "@react-email/components";
 
 interface WelcomeEmailProps {
   name: string;
@@ -338,7 +355,7 @@ export function WelcomeEmail({ name, loginUrl }: WelcomeEmailProps) {
   return (
     <Html>
       <Head />
-      <Body style={{ fontFamily: 'sans-serif' }}>
+      <Body style={{ fontFamily: "sans-serif" }}>
         <Container>
           <Text>Welcome, {name}!</Text>
           <Text>Thanks for signing up. Click below to get started.</Text>
@@ -392,7 +409,7 @@ Create test setup with database isolation:
 
 ```typescript
 // test/setup.ts
-import { beforeAll, afterAll } from 'bun:test';
+import { beforeAll, afterAll } from "bun:test";
 
 beforeAll(() => {
   // Global setup
@@ -436,6 +453,7 @@ src/
 ```
 
 **Key rules:**
+
 - **Do NOT create a `tests/` directory** — tests live next to source
 - **One database per test** — enables parallel execution (see [Unit Testing](./unit-testing.md))
 - **95% coverage minimum** — enforced by bunfig.toml threshold
@@ -447,26 +465,28 @@ bun add -d @playwright/test
 bunx playwright install
 ```
 
-Create `playwright.config.ts`:
+Create `playwright.config.ts` (must work in non-tty environments out of the box):
 
 ```typescript
-import { defineConfig } from '@playwright/test';
+import { defineConfig } from "@playwright/test";
+
+const isTty = process.stdout.isTTY;
 
 export default defineConfig({
-  testDir: './e2e',
-  testMatch: '**/*.e2e.ts',  // NOT .e2e.test.ts - bun will pick those up!
+  testDir: "./e2e",
+  testMatch: "**/*.e2e.ts", // NOT .e2e.test.ts - bun will pick those up!
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: isTty ? [["html", { open: "never" }]] : [["line"]],
   use: {
-    baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
+    baseURL: "http://localhost:3000",
+    trace: "on-first-retry",
   },
   webServer: {
-    command: 'bun run dev',
-    url: 'http://localhost:3000',
+    command: "bun run dev",
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },
 });
@@ -566,7 +586,7 @@ For Sprite, keep configuration minimal:
 ```typescript
 // src/lib/config.ts
 export const config = {
-  isDev: process.env.NODE_ENV !== 'production',
+  isDev: process.env.NODE_ENV !== "production",
   // Add only what you need, with sensible defaults
 };
 ```

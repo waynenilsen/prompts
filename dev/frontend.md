@@ -314,9 +314,12 @@ bunx playwright test
 // playwright.config.ts
 import { defineConfig } from '@playwright/test';
 
+const isTty = process.stdout.isTTY;
+
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.e2e.ts',  // Only .e2e.ts files
+  reporter: isTty ? [['html', { open: 'never' }]] : [['line']],
   webServer: {
     command: 'bun run dev',
     port: 3000,
