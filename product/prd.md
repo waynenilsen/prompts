@@ -38,7 +38,7 @@ Every high-performing PRD template separates problem from solution. Intercom tak
 
 ### 2. Explicit Non-Goals
 
-Define what you're *not* building as clearly as what you are. This prevents scope creep before it starts.
+Define what you're _not_ building as clearly as what you are. This prevents scope creep before it starts.
 
 Kevin Yien (Square) and Basecamp's Shape Up both emphasize boundaries as much as requirements.
 
@@ -68,16 +68,19 @@ Constraints force clarity. If you can't explain it simply, you don't understand 
 **Projects must run immediately on checkout without configuration.**
 
 This means:
+
 - No Auth0, Clerk, or external auth providers
 - No Supabase, PlanetScale, or external databases
 - No S3, Vercel Blob, or external storage
 - No Stripe (unless payments are explicitly required)
 
 **Email is the exception:** The stack includes a built-in email abstraction:
+
 - **Local/Dev:** Mailhog via Docker Compose (no external account needed)
 - **Production:** SendGrid (configured via `STAGE=production` env var)
 
 If your PRD requires other external services, you must:
+
 1. Explicitly state it as a requirement
 2. Justify why a local alternative won't work
 3. Accept the configuration burden this creates
@@ -102,12 +105,14 @@ prd/
 ```
 
 **Naming rules:**
+
 - 4-digit zero-padded prefix (`0001`, not `1`)
 - Followed by hyphen and kebab-case description
 - Sequential numbers, never reused
 - Reference in commits, PRs, and ERDs as `PRD-0001`
 
 **Tech Debt Cycles:**
+
 - **When the PRD number ends in 5 or 0** (e.g., `0005`, `0010`, `0015`, `0020`), use the [Tech Debt PRD template](./tech-debt-prd.md) instead of the standard template
 - Tech debt PRDs are intentionally minimal and link to the corresponding tech debt ERD
 - This ensures regular cycles dedicated to paying down technical debt
@@ -145,11 +150,12 @@ What's the opportunity cost of waiting? What's changed that makes this urgent?
 
 ### Non-Goals
 
-What are we explicitly *not* doing? What's out of scope?
+What are we explicitly _not_ doing? What's out of scope?
 
 This section is as important as the goals. It prevents scope creep and sets expectations.
 
 **Default non-goals** (unless explicitly required):
+
 - External authentication services
 - External database services
 - External storage services
@@ -200,6 +206,21 @@ Don't hide uncertainty. Surface it.
 ### Dependencies
 
 What do we need from other teams? What external factors affect delivery?
+
+### Documentation Updates
+
+**README Maintenance**
+
+When implementing this PRD, you are responsible for:
+
+1. **Reading the README** — Review the current README to understand existing features, stack, and constraints
+2. **Updating the README** — Add or update relevant sections to reflect the new features being added:
+   - Update feature descriptions if applicable
+   - Add new stack components if introduced
+   - Update constraints if they've changed
+   - Ensure the documentation accurately represents the current state of the project
+
+The README should always reflect the current state of the project after each PRD implementation.
 
 ---
 
@@ -264,6 +285,8 @@ Before sharing a PRD:
 - [ ] Open questions are surfaced
 - [ ] Fits on one page (or close to it)
 - [ ] Written in plain English, no jargon
+- [ ] README has been read and reviewed
+- [ ] README has been updated to reflect new features and changes
 
 ---
 
