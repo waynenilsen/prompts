@@ -73,6 +73,7 @@ src/
 ### Why Separate Files
 
 Hooks contain your business logic. If they're embedded in components:
+
 - You can't test the logic without rendering React
 - You can't reuse logic across components
 - You can't see the logic at a glance
@@ -81,7 +82,7 @@ Hooks contain your business logic. If they're embedded in components:
 
 ```typescript
 // hooks/use-user.ts
-import { trpc } from '@/lib/trpc';
+import { trpc } from "@/lib/trpc";
 
 export function useUser(userId: string) {
   return trpc.user.getById.useQuery({ id: userId });
@@ -90,7 +91,7 @@ export function useUser(userId: string) {
 // For mutations
 export function useCreateUser() {
   const utils = trpc.useUtils();
-  
+
   return trpc.user.create.useMutation({
     onSuccess: () => {
       utils.user.list.invalidate();
@@ -105,25 +106,23 @@ export function useCreateUser() {
 
 ```typescript
 // hooks/use-user.test.ts
-import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { trpc, trpcClient } from '@/lib/trpc';
-import { useUser } from './use-user';
+import { renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { trpc, trpcClient } from "@/lib/trpc";
+import { useUser } from "./use-user";
 
-test('useUser fetches user on mount', async () => {
+test("useUser fetches user on mount", async () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </trpc.Provider>
   );
 
-  const { result } = renderHook(() => useUser('1'), { wrapper });
+  const { result } = renderHook(() => useUser("1"), { wrapper });
 
   await waitFor(() => {
     expect(result.current.isLoading).toBe(false);
@@ -137,12 +136,12 @@ See [tRPC Guide](./trpc.md) for more testing patterns.
 
 ### Hook Categories
 
-| Category | Purpose | Example |
-|----------|---------|---------|
-| Data fetching | Load data from API | `useUser`, `useOrders` |
-| Mutations | Write data to API | `useCreateUser`, `useUpdateOrder` |
-| UI state | Local UI concerns | `useModal`, `useToast` |
-| Form state | Form handling | `useForm`, `useValidation` |
+| Category      | Purpose            | Example                           |
+| ------------- | ------------------ | --------------------------------- |
+| Data fetching | Load data from API | `useUser`, `useOrders`            |
+| Mutations     | Write data to API  | `useCreateUser`, `useUpdateOrder` |
+| UI state      | Local UI concerns  | `useModal`, `useToast`            |
+| Form state    | Form handling      | `useForm`, `useValidation`        |
 
 ---
 
@@ -153,6 +152,7 @@ See [tRPC Guide](./trpc.md) for more testing patterns.
 Components should assemble UI, not compute logic.
 
 **Wrong:**
+
 ```typescript
 // components/user-card.tsx
 export function UserCard({ userId }: { userId: string }) {
@@ -160,8 +160,12 @@ export function UserCard({ userId }: { userId: string }) {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    fetch(`/api/users/${userId}`).then(r => r.json()).then(setUser);
-    fetch(`/api/users/${userId}/orders`).then(r => r.json()).then(setOrders);
+    fetch(`/api/users/${userId}`)
+      .then((r) => r.json())
+      .then(setUser);
+    fetch(`/api/users/${userId}/orders`)
+      .then((r) => r.json())
+      .then(setOrders);
   }, [userId]);
 
   const totalSpent = orders.reduce((sum, o) => sum + o.total, 0);
@@ -172,15 +176,18 @@ export function UserCard({ userId }: { userId: string }) {
 ```
 
 **Right:**
+
 ```typescript
 // components/user-card.tsx
-import { trpc } from '@/lib/trpc';
+import { trpc } from "@/lib/trpc";
 
 export function UserCard({ userId }: { userId: string }) {
   // Multiple focused queries (don't overjoin)
-  const { data: user, isLoading: userLoading } = trpc.user.getById.useQuery({ id: userId });
+  const { data: user, isLoading: userLoading } = trpc.user.getById.useQuery({
+    id: userId,
+  });
   const { data: orders } = trpc.order.listByUser.useQuery({ userId });
-  
+
   // Compute derived state
   const totalSpent = orders?.reduce((sum, o) => sum + o.total, 0) ?? 0;
   const isVip = totalSpent > 1000;
@@ -216,6 +223,7 @@ bunx shadcn@latest add dialog
 ```
 
 **Rules:**
+
 - Never modify `components/ui/` files directly (regeneration overwrites)
 - Wrap shadcn components if you need custom behavior
 - Use the `cn()` utility for conditional classes
@@ -223,8 +231,8 @@ bunx shadcn@latest add dialog
 ```typescript
 // components/ui/button.tsx is generated
 // components/submit-button.tsx wraps it
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface SubmitButtonProps {
   isLoading?: boolean;
@@ -247,10 +255,10 @@ export function SubmitButton({ isLoading, children }: SubmitButtonProps) {
 
 ### File Naming Convention
 
-| Test Type | Extension | Location | Runner |
-|-----------|-----------|----------|--------|
-| Unit tests | `*.test.ts` | Next to source file | bun test |
-| E2E tests | `*.e2e.ts` | `e2e/` directory | Playwright |
+| Test Type  | Extension   | Location            | Runner     |
+| ---------- | ----------- | ------------------- | ---------- |
+| Unit tests | `*.test.ts` | Next to source file | bun test   |
+| E2E tests  | `*.e2e.ts`  | `e2e/` directory    | Playwright |
 
 **Critical:** Do NOT use `.e2e.test.ts` for Playwright tests. Bun will pick them up and fail.
 
@@ -289,15 +297,15 @@ e2e/
 
 ```typescript
 // e2e/auth.e2e.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('user can log in', async ({ page }) => {
-  await page.goto('/login');
-  await page.fill('[name=email]', 'alice@example.com');
-  await page.fill('[name=password]', 'password123');
-  await page.click('button[type=submit]');
+test("user can log in", async ({ page }) => {
+  await page.goto("/login");
+  await page.fill("[name=email]", "alice@example.com");
+  await page.fill("[name=password]", "password123");
+  await page.click("button[type=submit]");
 
-  await expect(page).toHaveURL('/dashboard');
+  await expect(page).toHaveURL("/dashboard");
 });
 ```
 
@@ -310,21 +318,54 @@ bunx playwright test
 
 ```typescript
 // playwright.config.ts
-import { defineConfig } from '@playwright/test';
+import { defineConfig } from "@playwright/test";
 
 const isTty = process.stdout.isTTY;
 
 export default defineConfig({
-  testDir: './e2e',
-  testMatch: '**/*.e2e.ts',  // Only .e2e.ts files
-  reporter: isTty ? [['html', { open: 'never' }]] : [['line']],
+  testDir: "./e2e",
+  testMatch: "**/*.e2e.ts", // Only .e2e.ts files
+  reporter: isTty ? [["html", { open: "never" }]] : [["line"]],
   webServer: {
-    command: 'bun run dev',
+    command: "bun run dev",
     port: 3000,
     reuseExistingServer: !process.env.CI,
   },
 });
 ```
+
+---
+
+## Auth-Aware Pages
+
+**All pages must respect authentication state.** See [Authentication Guide](./auth.md#conditional-routing-and-redirects) for complete patterns.
+
+### Home Page Pattern
+
+The root path `/` is the application when authenticated, marketing when not:
+
+- **Logged out:** Marketing/landing page
+- **Logged in:** Application (dashboard, main view)
+
+**Do NOT put the application under `/app` or `/dashboard`.** The root path is the application.
+
+### Multi-Tenant Routing
+
+**If the application has organizations (multi-tenant):**
+
+The application must be at `/organization-slug` so URLs are shareable. When users copy and paste URLs, they work correctly because the organization context is in the URL path.
+
+**Why:** Users may belong to multiple organizations. URLs must include the organization slug so:
+
+- Shared URLs work correctly (recipient sees the same organization context)
+- Users can easily switch between organizations
+- URLs are bookmarkable and shareable
+
+**Example:** If a user belongs to "Acme Corp" (slug: `acme-corp`), the application is at `/acme-corp`, not `/`. The root `/` redirects to the user's default organization or shows an organization selector.
+
+### Redirecting Auth Pages
+
+Auth pages (`/sign-in`, `/sign-up`) must redirect if already logged in (to `/` or `/organization-slug` if multi-tenant).
 
 ---
 
@@ -336,7 +377,7 @@ export default defineConfig({
 
 ```typescript
 // Use tRPC hooks in components
-import { trpc } from '@/lib/trpc';
+import { trpc } from "@/lib/trpc";
 
 function UserProfile({ userId }: { userId: string }) {
   const { data: user, isLoading } = trpc.user.getById.useQuery({ id: userId });
@@ -378,11 +419,15 @@ Before adding a new feature:
 - [ ] shadcn/ui components used where appropriate
 - [ ] No business logic in components
 - [ ] Types defined in `types/`
+- [ ] Pages conditionally render based on auth state (see [Authentication](./auth.md#conditional-routing-and-redirects))
+- [ ] Auth pages redirect if already logged in
+- [ ] Navigation conditionally shows auth buttons
 
 ---
 
 ## Related
 
+- [Authentication](./auth.md) - Auth patterns including conditional routing and redirects
 - [tRPC](./trpc.md) - End-to-end type-safe APIs with tRPC and TanStack Query
 - [Unit Testing](./unit-testing.md) - Database isolation for hook tests, coverage thresholds
 - [Project Setup](./setup.md) - Full stack setup including frontend tooling

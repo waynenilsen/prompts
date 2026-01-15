@@ -46,6 +46,42 @@ Tenant-based filtering is **only necessary for multi-tenant applications**.
 
 ### If Multi-Tenant (B2B SaaS with multiple organizations)
 
+**Organization Schema Requirements:**
+
+Organizations must have a `slug` field for URL routing:
+
+```prisma
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique  // Required for multi-tenant routing
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  members  UserOrganization[]
+  // ... other relations
+}
+```
+
+**User Schema:**
+
+Users must have an optional `name` field:
+
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?  // Optional
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  sessions  Session[]
+  // ... other relations
+}
+```
+
+**Query Filtering:**
+
 Add `tenant_id` or `organization_id` to relevant tables and filter all queries:
 
 ```typescript
@@ -62,6 +98,7 @@ const users = await prisma.user.findMany({
 - Every query on tenant-scoped data must include the tenant filter
 - Validate tenant ownership at the service layer, not in the database
 - Create helper functions to enforce consistent filtering
+- Organizations must have a unique `slug` for URL routing
 
 ### If B2C (Single-tenant, consumer application)
 
@@ -117,6 +154,49 @@ const sessionCookie = {
   path: '/',
 };
 ```
+
+---
+
+## Conditional Routing and Redirects
+
+**All pages must respect authentication state.** Never show auth pages to logged-in users, and never show application pages to logged-out users.
+
+### Home Page (`/`)
+
+The home page must conditionally render based on auth state:
+
+- **Logged out:** Show marketing/landing page
+- **Logged in:** Show the application (dashboard, main app view, etc.)
+
+**Do NOT put the application under a different route** (e.g., `/app` or `/dashboard`). The root path `/` is the application when authenticated.
+
+### Multi-Tenant Routing
+
+**If the application has organizations (multi-tenant):**
+
+The application must be at `/organization-slug` so URLs are shareable. When users copy and paste URLs, they work correctly because the organization context is in the URL path.
+
+**Why:** Users may belong to multiple organizations. URLs must include the organization slug so:
+- Shared URLs work correctly (recipient sees the same organization context)
+- Users can easily switch between organizations
+- URLs are bookmarkable and shareable
+
+**Example:** If a user belongs to "Acme Corp" (slug: `acme-corp`), the application is at `/acme-corp`, not `/`. The root `/` redirects to the user's default organization or shows an organization selector.
+
+### Auth Pages (`/sign-in`, `/sign-up`)
+
+Auth pages must redirect logged-in users to the home page (or their organization if multi-tenant).
+
+**Same pattern for `/sign-up`** — redirect if already logged in.
+
+### Navigation Components
+
+Navigation must conditionally show/hide auth buttons based on auth state:
+
+- Never show "Sign In" or "Sign Up" buttons when logged in
+- Never show user menu or "Logout" when logged out
+- Use tRPC `auth.getMe` query to check auth state in client components
+- Use server-side session check in page components for redirects
 
 ---
 
@@ -278,6 +358,13 @@ When implementing auth:
 - [ ] No third-party auth providers
 - [ ] RBAC checks in application code, not database
 - [ ] Permissions cached per request
+- [ ] Home page (`/`) conditionally renders marketing vs application based on auth state
+- [ ] Auth pages (`/sign-in`, `/sign-up`) redirect to `/` if already logged in
+- [ ] Navigation conditionally shows/hides auth buttons based on auth state
+- [ ] Application is at `/` when logged in (not under `/app` or `/dashboard`)
+- [ ] If multi-tenant: Application is at `/organization-slug` for shareable URLs
+- [ ] If multi-tenant: Organizations have a unique `slug` field
+- [ ] User model includes optional `name` field
 
 ---
 
