@@ -38,10 +38,8 @@ log "Updating .gitignore"
 cat >> .gitignore << 'EOF'
 
 # Database
-prisma/dev.db
-prisma/dev.db-journal
-prisma/*.db
-prisma/*.db-journal
+databases/
+databases/**/*
 
 # Generated docs
 docs/
@@ -58,6 +56,9 @@ test-results/
 .env.local
 .env.*.local
 EOF
+
+log "Creating databases directory"
+mkdir -p databases
 
 log "Creating .env file"
 cat > .env << EOF
@@ -76,7 +77,7 @@ EMAIL_FROM=noreply@example.com
 # SENDGRID_API_KEY=SG.xxx
 
 # Database
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="file:./databases/dev.db"
 EOF
 
 # Create .env.example without sensitive values
@@ -96,7 +97,7 @@ EMAIL_FROM=noreply@example.com
 # SENDGRID_API_KEY=SG.xxx
 
 # Database
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="file:./databases/dev.db"
 EOF
 
 success "Environment configured"

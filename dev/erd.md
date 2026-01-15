@@ -65,7 +65,7 @@ The database is SQLite. This is intentional:
 - Clone, install, run — that's it
 
 When writing ERDs, design for SQLite:
-- Single-file database in `prisma/dev.db`
+- Single-file database in `databases/dev.db`
 - No stored procedures or database-specific features
 - Prisma handles all data access
 

@@ -45,6 +45,9 @@ prisma/
     │   └── migration.sql
     └── 20240102000000_add_posts/
         └── migration.sql
+
+databases/
+└── dev.db              # SQLite database file
 ```
 
 **Requires** `prisma.schema` config in `package.json`:

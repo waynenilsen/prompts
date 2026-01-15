@@ -105,7 +105,7 @@ import { unlink } from 'fs/promises';
 
 // Each test file gets a unique database
 const testId = randomUUID();
-const testDbPath = `./prisma/test-${testId}.db`;
+const testDbPath = `./databases/test-${testId}.db`;
 
 // Set DATABASE_URL before Prisma client is created
 process.env.DATABASE_URL = `file:${testDbPath}`;
@@ -160,7 +160,7 @@ import { unlink } from 'fs/promises';
 
 export async function createTestDatabase() {
   const testId = randomUUID();
-  const dbPath = `./prisma/test-${testId}.db`;
+  const dbPath = `./databases/test-${testId}.db`;
   const dbUrl = `file:${dbPath}`;
 
   // Push schema to new database

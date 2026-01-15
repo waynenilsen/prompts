@@ -137,7 +137,9 @@ prisma/
 ├── schema.prisma       # Generator and datasource only
 ├── user.prisma         # User model
 ├── post.prisma         # Post model (example)
-├── migrations/         # Auto-generated
+└── migrations/         # Auto-generated
+
+databases/
 └── dev.db              # SQLite database file
 ```
 
@@ -153,7 +155,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 ```
 
@@ -630,8 +632,8 @@ Ensure these are ignored:
 
 ```gitignore
 # Database
-prisma/dev.db
-prisma/dev.db-journal
+databases/
+databases/**/*
 
 # Generated
 .next/
@@ -675,7 +677,7 @@ Sprite provides zero-configuration hosting with SQLite persistence.
 
 ### How It Works
 
-1. SQLite database is a file (`prisma/dev.db`)
+1. SQLite database is a file (`databases/dev.db`)
 2. Sprite persists the filesystem
 3. No database server to configure
 4. Deploy by pushing code
