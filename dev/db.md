@@ -75,6 +75,7 @@ id String @id @default(cuid())
 ```
 
 **Never use:**
+
 - `@default(uuid())` - Use cuid instead
 - `@default(autoincrement())` - Not suitable for distributed systems
 - `Int @id @default(autoincrement())` - Sequential IDs leak information
@@ -113,9 +114,20 @@ model Comment {
   authorId  String
   createdAt DateTime @default(now())
 }
+
+model UserOrganization {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String
+  createdAt      DateTime     @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+}
 ```
 
-**Exception:** Join tables (many-to-many relations) may use composite keys without an explicit `id` field, but if they have an `id` field, it must use `cuid()`.
+**All tables must have an `id` field with `cuid()`, including join tables.** Do not use composite keys (`@@id([field1, field2])`) as primary keys. Always use a single `id` field with `cuid()`.
 
 ---
 
