@@ -7,6 +7,7 @@ Developer guides and conventions for this project.
 | Layer | Technology |
 |-------|-----------|
 | Framework | Next.js (App Router) |
+| API | tRPC + TanStack Query |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
 | Database | Prisma + SQLite (multi-file schema) |
@@ -17,6 +18,7 @@ Developer guides and conventions for this project.
 ## Contents
 
 - [Project Setup](./setup.md) - Bootstrap projects with the full stack
+- [tRPC](./trpc.md) - End-to-end type-safe APIs with tRPC and TanStack Query
 - [Email](./email.md) - React Email templates, Mailhog dev server, SendGrid production
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Frontend Architecture](./frontend.md) - Component organization, hooks, shadcn/ui patterns
@@ -37,6 +39,7 @@ Developer guides and conventions for this project.
 - **E2E tests in `e2e/`** — use `*.e2e.ts`, not `*.e2e.test.ts`
 - **95% coverage minimum** — enforced by bunfig.toml threshold
 - **One database per test** — enables parallel execution
+- **tRPC for all APIs** — never use Server Actions (except rare cookie writes in auth flows)
 
 ## Related
 

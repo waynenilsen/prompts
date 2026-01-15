@@ -39,6 +39,7 @@ This is not optional. Moving the ticket signals to the team that work has begun 
 ### 3. Check Domain-Specific Guides
 
 If working on authentication, read [Authentication](./auth.md) first.
+If working on API endpoints, read [tRPC](./trpc.md) first. **Never use Server Actions** (except rare cookie writes in auth flows).
 If instructed to serviceize Ralph, read [Ralph Service Mode](./auth.md#ralph-service-mode-systemd) first.
 
 ### 4. Understand the Ticket
@@ -64,13 +65,13 @@ Create the test file **next to the source file** (not in a `tests/` directory):
 
 ```typescript
 // src/lib/users.test.ts
-import { test, expect } from 'bun:test';
-import { createUser } from './users';
+import { test, expect } from "bun:test";
+import { createUser } from "./users";
 
-test('createUser returns user with generated id', () => {
-  const user = createUser({ name: 'Alice', email: 'alice@example.com' });
+test("createUser returns user with generated id", () => {
+  const user = createUser({ name: "Alice", email: "alice@example.com" });
   expect(user.id).toBeDefined();
-  expect(user.name).toBe('Alice');
+  expect(user.name).toBe("Alice");
 });
 ```
 
@@ -80,10 +81,10 @@ Create the function signature with a stub implementation:
 
 ```typescript
 // src/lib/users.ts
-import type { User, CreateUserInput } from '@/types';
+import type { User, CreateUserInput } from "@/types";
 
 export function createUser(input: CreateUserInput): User {
-  return { id: '', name: '', email: '', createdAt: new Date() }; // stub
+  return { id: "", name: "", email: "", createdAt: new Date() }; // stub
 }
 ```
 
@@ -107,8 +108,8 @@ Write the minimal code to make the test pass:
 
 ```typescript
 // src/lib/users.ts
-import { prisma } from '@/lib/prisma';
-import type { User, CreateUserInput } from '@/types';
+import { prisma } from "@/lib/prisma";
+import type { User, CreateUserInput } from "@/types";
 
 export async function createUser(input: CreateUserInput): Promise<User> {
   return prisma.user.create({
@@ -141,6 +142,7 @@ When you see a failing test, there are two possibilities:
 Your new code changed behavior that another test depends on. This is your bug to fix.
 
 **Common causes:**
+
 - Changed a function signature
 - Modified shared state
 - Altered return values
@@ -148,6 +150,7 @@ Your new code changed behavior that another test depends on. This is your bug to
 - Updated API responses
 
 **How to fix:**
+
 1. Read the failing test - understand what it expects
 2. Trace why your change affected it
 3. Either update your implementation or update the test (if the old expectation is now wrong)
@@ -157,16 +160,19 @@ Your new code changed behavior that another test depends on. This is your bug to
 The test was failing before you started. This is still your job to fix.
 
 **Why it's your responsibility:**
+
 - You can't merge with a broken build
 - You touched the codebase, you own it
 - Leaving broken tests is technical debt
 
 **How to fix:**
+
 1. Check if it's a flaky test (run it a few times)
 2. Read the test and the code it tests
 3. Fix the code or fix the test
 
 **Do not:**
+
 - Skip the test
 - Mark it as `.todo()`
 - Merge with failing tests
@@ -202,6 +208,7 @@ git diff --staged
 ```
 
 Check for:
+
 - Debug statements (`console.log`, `debugger`)
 - Commented-out code
 - Hardcoded values that should be constants
@@ -271,6 +278,7 @@ src/
 ```
 
 **NOT:**
+
 ```
 tests/
 ├── lib/
@@ -286,6 +294,7 @@ e2e/
 ```
 
 **NOT:**
+
 ```
 e2e/
 ├── auth.e2e.test.ts       # ✗ Wrong - bun will pick this up
@@ -352,6 +361,7 @@ Tests fail? Docs broken? Fix them. All of them. Then push.
 
 ## Related
 
+- [tRPC](./trpc.md) - End-to-end type-safe APIs, never use Server Actions
 - [Authentication](./auth.md) - Email/password auth, session management, no RLS
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - How tickets are created from ERDs

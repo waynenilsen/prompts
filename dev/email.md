@@ -287,30 +287,37 @@ const footer = {
 
 ### Sending the Email
 
-```typescript
-// src/app/actions/auth.ts
-'use server';
+**Use tRPC, not Server Actions.** See [tRPC Guide](./trpc.md) for complete patterns.
 
+```typescript
+// src/server/routers/auth.ts
+import { z } from 'zod';
+import { router, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/lib/email';
 import { WelcomeEmail } from '@/emails/welcome';
-import { prisma } from '@/lib/prisma';
 
-export async function registerUser(data: RegisterInput) {
-  const user = await prisma.user.create({
-    data: {
-      email: data.email,
-      name: data.name,
-    },
-  });
+export const authRouter = router({
+  register: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        name: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.user.create({
+        data: input,
+      });
 
-  await sendEmail({
-    to: user.email,
-    subject: 'Welcome to Our App!',
-    template: <WelcomeEmail name={user.name} loginUrl="https://app.example.com/login" />,
-  });
+      await sendEmail({
+        to: user.email,
+        subject: 'Welcome to Our App!',
+        template: <WelcomeEmail name={user.name} loginUrl="https://app.example.com/login" />,
+      });
 
-  return user;
-}
+      return user;
+    }),
+});
 ```
 
 ---

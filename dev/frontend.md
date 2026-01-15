@@ -77,74 +77,63 @@ Hooks contain your business logic. If they're embedded in components:
 - You can't reuse logic across components
 - You can't see the logic at a glance
 
-### The Pattern
+### The Pattern (with tRPC)
 
 ```typescript
 // hooks/use-user.ts
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
-import type { User } from '@/types';
+import { trpc } from '@/lib/trpc';
 
-interface UseUserResult {
-  user: User | null;
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
+export function useUser(userId: string) {
+  return trpc.user.getById.useQuery({ id: userId });
 }
 
-export function useUser(userId: string): UseUserResult {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const refetch = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await api.users.get(userId);
-      setUser(data);
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error('Unknown error'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    refetch();
-  }, [userId]);
-
-  return { user, isLoading, error, refetch };
+// For mutations
+export function useCreateUser() {
+  const utils = trpc.useUtils();
+  
+  return trpc.user.create.useMutation({
+    onSuccess: () => {
+      utils.user.list.invalidate();
+    },
+  });
 }
 ```
 
-### Testing Hooks
+**Note:** With tRPC + TanStack Query, you rarely need custom hooks. Use tRPC hooks directly in components. Only create custom hooks if you need to compose multiple queries or add complex logic.
+
+### Testing Hooks (with tRPC)
 
 ```typescript
 // hooks/use-user.test.ts
 import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { trpc, trpcClient } from '@/lib/trpc';
 import { useUser } from './use-user';
-import { api } from '@/lib/api';
-
-// Mock the API
-vi.mock('@/lib/api');
 
 test('useUser fetches user on mount', async () => {
-  const mockUser = { id: '1', name: 'Alice' };
-  vi.mocked(api.users.get).mockResolvedValue(mockUser);
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
 
-  const { result } = renderHook(() => useUser('1'));
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </trpc.Provider>
+  );
 
-  expect(result.current.isLoading).toBe(true);
+  const { result } = renderHook(() => useUser('1'), { wrapper });
 
   await waitFor(() => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  expect(result.current.user).toEqual(mockUser);
-  expect(api.users.get).toHaveBeenCalledWith('1');
+  expect(result.current.data).toBeDefined();
 });
 ```
+
+See [tRPC Guide](./trpc.md) for more testing patterns.
 
 ### Hook Categories
 
@@ -185,12 +174,19 @@ export function UserCard({ userId }: { userId: string }) {
 **Right:**
 ```typescript
 // components/user-card.tsx
-export function UserCard({ userId }: { userId: string }) {
-  const { user, isLoading } = useUser(userId);
-  const { orders } = useUserOrders(userId);
-  const { totalSpent, isVip } = useUserStats(orders);
+import { trpc } from '@/lib/trpc';
 
-  if (isLoading) return <CardSkeleton />;
+export function UserCard({ userId }: { userId: string }) {
+  // Multiple focused queries (don't overjoin)
+  const { data: user, isLoading: userLoading } = trpc.user.getById.useQuery({ id: userId });
+  const { data: orders } = trpc.order.listByUser.useQuery({ userId });
+  
+  // Compute derived state
+  const totalSpent = orders?.reduce((sum, o) => sum + o.total, 0) ?? 0;
+  const isVip = totalSpent > 1000;
+
+  if (userLoading) return <CardSkeleton />;
+  if (!user) return null;
 
   return (
     <Card>
@@ -205,6 +201,8 @@ export function UserCard({ userId }: { userId: string }) {
   );
 }
 ```
+
+**Key:** Make multiple focused queries instead of overjoining. See [tRPC Guide](./trpc.md) for performance best practices.
 
 ### shadcn/ui Usage
 
@@ -332,55 +330,40 @@ export default defineConfig({
 
 ## API Integration
 
-### API Client
+### tRPC for All API Calls
 
-Create a typed API client in `lib/api.ts`:
-
-```typescript
-// lib/api.ts
-const BASE_URL = '/api';
-
-async function fetcher<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-
-  if (!res.ok) {
-    throw new Error(`API Error: ${res.status}`);
-  }
-
-  return res.json();
-}
-
-export const api = {
-  users: {
-    get: (id: string) => fetcher<User>(`/users/${id}`),
-    list: () => fetcher<User[]>('/users'),
-    create: (data: CreateUserInput) =>
-      fetcher<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
-  },
-  // Add more resources...
-};
-```
-
-### Server Actions vs API Routes
-
-Use Next.js Server Actions for mutations, API routes for data fetching.
+**Never use Server Actions.** All API calls must go through tRPC. See [tRPC Guide](./trpc.md) for complete setup.
 
 ```typescript
-// app/actions/users.ts
-'use server';
+// Use tRPC hooks in components
+import { trpc } from '@/lib/trpc';
 
-import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+function UserProfile({ userId }: { userId: string }) {
+  const { data: user, isLoading } = trpc.user.getById.useQuery({ id: userId });
+  const createUser = trpc.user.create.useMutation();
 
-export async function createUser(data: CreateUserInput) {
-  const user = await prisma.user.create({ data });
-  revalidatePath('/users');
-  return user;
+  // Component logic...
 }
 ```
+
+### Exception: Cookie Writes (Rare)
+
+The only exception is writing cookies in auth flows. Use POST-redirect-GET pattern:
+
+```typescript
+// src/app/api/auth/login/route.ts
+// Only for cookie writes in auth flows
+export async function POST(request: Request) {
+  // ... validate credentials ...
+  // ... create session ...
+  // Write cookie
+  cookies().set('session', sessionId, { ... });
+  // Redirect (POST-redirect-GET pattern)
+  return NextResponse.redirect(new URL('/dashboard', request.url));
+}
+```
+
+**Rule:** If you're not writing a cookie in an auth flow, use tRPC.
 
 ---
 
@@ -400,6 +383,7 @@ Before adding a new feature:
 
 ## Related
 
+- [tRPC](./trpc.md) - End-to-end type-safe APIs with tRPC and TanStack Query
 - [Unit Testing](./unit-testing.md) - Database isolation for hook tests, coverage thresholds
 - [Project Setup](./setup.md) - Full stack setup including frontend tooling
 - [Test-Driven Development](./tdd.md) - TDD workflow for hooks and components

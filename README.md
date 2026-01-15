@@ -7,6 +7,7 @@ Opinionated development workflow prompts for building zero-configuration deploya
 | Layer | Technology |
 |-------|-----------|
 | Framework | Next.js (App Router) |
+| API | tRPC + TanStack Query |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
 | Database | Prisma + SQLite |
@@ -20,6 +21,7 @@ Opinionated development workflow prompts for building zero-configuration deploya
 - **Run on checkout** — clone, install, run
 - **GitHub CLI (`gh`)** for all ticket operations
 - **Test-near-code** — unit tests next to source files
+- **tRPC for all APIs** — never use Server Actions (except rare cookie writes)
 
 ## Documentation
 

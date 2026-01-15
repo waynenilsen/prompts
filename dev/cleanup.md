@@ -183,6 +183,26 @@ export function processOrder(order: Order): Receipt {
 export function processOrder(order: Order): Receipt {
 ```
 
+### Server Actions Usage
+
+**Never use Server Actions.** All API calls must use tRPC.
+
+```typescript
+// Wrong - Server Action
+'use server';
+export async function createUser(data: CreateUserInput) { ... }
+
+// Right - tRPC router
+export const userRouter = router({
+  create: publicProcedure.mutation(...)
+});
+
+// Exception: Cookie writes in auth flows (POST-redirect-GET pattern)
+// src/app/api/auth/login/route.ts - OK for login/logout only
+```
+
+If you see `'use server'` anywhere except login/logout cookie writes, replace it with tRPC. See [tRPC Guide](./trpc.md).
+
 ### External Service References
 
 Did you accidentally add an external service dependency?
@@ -199,6 +219,9 @@ import { prisma } from '@/lib/prisma';
 
 // Right - email uses built-in abstraction
 import { sendEmail } from '@/lib/email';
+
+// Right - tRPC for APIs
+import { trpc } from '@/lib/trpc';
 ```
 
 If you need an external service (other than SendGrid for production email), it must be explicitly approved in the PRD.
@@ -247,6 +270,8 @@ Before pushing:
 - [ ] Public APIs have TypeDoc comments
 - [ ] Unit tests are next to source files (`*.test.ts`)
 - [ ] E2E tests use `*.e2e.ts` in `e2e/`
+- [ ] No Server Actions (except rare cookie writes in auth flows)
+- [ ] All APIs use tRPC
 - [ ] No external service dependencies added
 - [ ] Hooks extracted for testable logic
 
@@ -294,6 +319,7 @@ Read your diff. Fix what you find. Compile docs. Then push.
 
 ## Related
 
+- [tRPC](./trpc.md) - API patterns (never use Server Actions)
 - [Implement Ticket](./implement-ticket.md) - Full ticket workflow that ends with cleanup
 - [Conventional Commits](./conventional-commits.md) - Commit message format after cleanup
 - [Test-Driven Development](./tdd.md) - TDD workflow before cleanup

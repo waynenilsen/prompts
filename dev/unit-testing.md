@@ -61,7 +61,7 @@ We target **95% coverage minimum**:
 
 Do not add to `coveragePathIgnorePatterns` unless absolutely necessary:
 
-- **Don't exclude:** Business logic, API routes, server actions, hooks, utilities
+- **Don't exclude:** Business logic, tRPC routers, hooks, utilities
 - **May exclude:** Generated code (Prisma client), type definitions, config files
 
 ```toml
@@ -319,19 +319,23 @@ export async function createUser(
 
 ### Application Layer Uses Singleton
 
-The application code still uses the singleton, but the function is testable:
+The application code uses tRPC routers, but the function is testable:
 
 ```typescript
-// src/app/actions/users.ts
-'use server';
-
-import { prisma } from '@/lib/prisma';
+// src/server/routers/user.ts
+import { router, publicProcedure } from '@/server/trpc';
 import { createUser as createUserFn } from '@/lib/users';
 
-export async function createUser(data: CreateUserInput) {
-  return createUserFn(prisma, data);
-}
+export const userRouter = router({
+  create: publicProcedure
+    .input(z.object({ email: z.string().email(), name: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      return createUserFn(ctx.prisma, input);
+    }),
+});
 ```
+
+**Note:** Never use Server Actions. All APIs use tRPC. See [tRPC Guide](./trpc.md).
 
 ---
 

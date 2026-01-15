@@ -8,7 +8,8 @@ The opinionated stack for zero-configuration deployable applications.
 
 | Layer      | Technology                     | Why                                                     |
 | ---------- | ------------------------------ | ------------------------------------------------------- |
-| Framework  | Next.js                        | Full-stack React, App Router, Server Actions            |
+| Framework  | Next.js                        | Full-stack React, App Router                            |
+| API        | tRPC + TanStack Query          | End-to-end type-safe APIs                               |
 | Styling    | Tailwind CSS                   | Utility-first, no CSS files to manage                   |
 | Components | shadcn/ui                      | Copy-paste components you own                           |
 | Database   | Prisma + SQLite                | Type-safe ORM, zero-config database                     |
@@ -254,7 +255,115 @@ bunx shadcn@latest add button card input label
 
 Components are copied to `src/components/ui/`. You own them.
 
-### 5. Set Up Email (React Email + Mailhog)
+### 5. Set Up tRPC
+
+**Critical:** All API calls must use tRPC. Never use Server Actions (except rare cookie writes in auth flows).
+
+```bash
+# Install tRPC and dependencies
+bun add @trpc/server@latest @trpc/client@latest @trpc/react-query@latest @trpc/next@latest
+bun add @tanstack/react-query@latest
+bun add superjson
+bun add -d @types/superjson
+```
+
+Create the tRPC setup files:
+
+```typescript
+// src/server/trpc.ts
+import { initTRPC } from '@trpc/server';
+import superjson from 'superjson';
+import { prisma } from '@/lib/prisma';
+
+export function createContext() {
+  return { prisma };
+}
+
+type Context = Awaited<ReturnType<typeof createContext>>;
+
+const t = initTRPC.context<Context>().create({
+  transformer: superjson, // Critical: enables Date/Map/Set serialization
+});
+
+export const router = t.router;
+export const publicProcedure = t.procedure;
+```
+
+```typescript
+// src/app/api/trpc/[trpc]/route.ts
+import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+import { appRouter } from '@/server/routers/_app';
+import { createContext } from '@/server/trpc';
+
+const handler = (req: Request) =>
+  fetchRequestHandler({
+    endpoint: '/api/trpc',
+    req,
+    router: appRouter,
+    createContext,
+  });
+
+export { handler as GET, handler as POST };
+```
+
+```typescript
+// src/server/routers/_app.ts
+import { router } from '@/server/trpc';
+
+export const appRouter = router({});
+
+export type AppRouter = typeof appRouter;
+```
+
+```typescript
+// src/lib/trpc.ts
+import { createTRPCReact } from '@trpc/react-query';
+import { httpBatchLink } from '@trpc/client';
+import superjson from 'superjson';
+import type { AppRouter } from '@/server/routers/_app';
+
+export const trpc = createTRPCReact<AppRouter>();
+
+export const trpcClient = trpc.createClient({
+  links: [
+    httpBatchLink({
+      url: '/api/trpc',
+      transformer: superjson,
+    }),
+  ],
+});
+```
+
+Update `src/app/layout.tsx` to include providers:
+
+```typescript
+// src/app/layout.tsx
+'use client';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState } from 'react';
+import { trpc, trpcClient } from '@/lib/trpc';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
+
+  return (
+    <html>
+      <body>
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        </trpc.Provider>
+      </body>
+    </html>
+  );
+}
+```
+
+See [tRPC Guide](./trpc.md) for complete patterns and usage.
+
+### 6. Set Up Email (React Email + Mailhog)
 
 Email uses a stage-based abstraction: Mailhog locally, SendGrid in production.
 
@@ -369,7 +478,7 @@ export function WelcomeEmail({ name, loginUrl }: WelcomeEmailProps) {
 
 See [Email](./email.md) for detailed patterns and testing.
 
-### 6. Set Up TypeDoc
+### 7. Set Up TypeDoc
 
 ```bash
 bun add -d typedoc
@@ -399,7 +508,7 @@ Add scripts:
 }
 ```
 
-### 7. Set Up Testing
+### 8. Set Up Testing
 
 #### Unit Tests (Bun)
 
@@ -515,7 +624,7 @@ Add test scripts:
 }
 ```
 
-### 8. Configure .gitignore
+### 9. Configure .gitignore
 
 Ensure these are ignored:
 
@@ -534,7 +643,7 @@ playwright-report/
 test-results/
 ```
 
-### 9. Verify Everything Works
+### 10. Verify Everything Works
 
 ```bash
 # Format and lint
@@ -629,6 +738,7 @@ Before writing features, verify:
 - [ ] Biome installed and configured (ESLint removed)
 - [ ] Tailwind CSS working
 - [ ] Prisma + SQLite configured
+- [ ] tRPC + TanStack Query configured (see [tRPC Guide](./trpc.md))
 - [ ] shadcn/ui initialized
 - [ ] TypeDoc configured
 - [ ] Bun test configured with test-near-code pattern
@@ -636,6 +746,7 @@ Before writing features, verify:
 - [ ] All scripts work: `check`, `docs`, `test`, `test:e2e`, `build`
 - [ ] Dev server starts without errors
 - [ ] **No external services required**
+- [ ] **No Server Actions** (except rare cookie writes in auth flows)
 
 ---
 

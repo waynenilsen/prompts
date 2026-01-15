@@ -99,10 +99,12 @@ CREATE INDEX sessions_expires_at_idx ON sessions(expires_at);
 
 ### Session Lifecycle
 
-1. **Login**: Create session, set secure cookie
-2. **Request**: Validate session from cookie, attach user to request context
-3. **Logout**: Delete session from database, clear cookie
+1. **Login**: Create session, set secure cookie (uses POST-redirect-GET pattern - see [tRPC Guide](./trpc.md))
+2. **Request**: Validate session from cookie, attach user to request context (via tRPC context)
+3. **Logout**: Delete session from database, clear cookie (uses POST-redirect-GET pattern)
 4. **Expiration**: Background job cleans up expired sessions
+
+**Note:** Login/logout are the only endpoints that write cookies. They use POST-redirect-GET pattern (see [tRPC Guide](./trpc.md)). All other auth operations (checking session, getting current user, etc.) use tRPC.
 
 ### Cookie Settings
 
@@ -281,5 +283,6 @@ When implementing auth:
 
 ## Related
 
+- [tRPC](./trpc.md) - API patterns (login/logout use POST-redirect-GET, everything else uses tRPC)
 - [Implement Ticket](./implement-ticket.md) - Development workflow
 - [Unit Testing](./unit-testing.md) - Testing auth flows

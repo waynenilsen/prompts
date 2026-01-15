@@ -213,42 +213,58 @@ Use requirement IDs for traceability.
 
 ### API Design
 
-If introducing or modifying APIs, use Next.js patterns:
+**Never use Server Actions.** All APIs must use tRPC. See [tRPC Guide](./trpc.md) for complete patterns.
 
 ```typescript
-// app/api/users/route.ts
-import { prisma } from '@/lib/prisma';
-import { NextResponse } from 'next/server';
+// src/server/routers/user.ts
+import { z } from 'zod';
+import { router, publicProcedure } from '@/server/trpc';
 
-export async function POST(request: Request) {
-  const body = await request.json();
+export const userRouter = router({
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.prisma.user.findUnique({
+        where: { id: input.id },
+      });
+    }),
 
-  const user = await prisma.user.create({
-    data: {
-      email: body.email,
-      name: body.name,
-    },
-  });
+  create: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        name: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.prisma.user.create({
+        data: input,
+      });
+    }),
 
-  return NextResponse.json(user, { status: 201 });
-}
+  list: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(10),
+        offset: z.number().min(0).default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.prisma.user.findMany({
+        take: input.limit,
+        skip: input.offset,
+      });
+    }),
+});
 ```
 
-Or Server Actions:
+**Key principles:**
+- Use focused queries (don't overjoin)
+- Make multiple requests for different entities
+- Denormalize only when profiling shows it's necessary
+- Use superjson transformer for Date/Map/Set serialization
 
-```typescript
-// app/actions/users.ts
-'use server';
-
-import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
-
-export async function createUser(data: CreateUserInput) {
-  const user = await prisma.user.create({ data });
-  revalidatePath('/users');
-  return user;
-}
-```
+**Exception:** Cookie writes in auth flows use POST-redirect-GET pattern (see [tRPC Guide](./trpc.md)).
 
 ### Data Model
 

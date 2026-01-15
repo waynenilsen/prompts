@@ -79,7 +79,7 @@ Open the ERD (e.g., `./erd/0001-user-authentication.md`) and identify:
 
 - **Components** — Each distinct system component
 - **Requirements** — Each REQ-XXX item
-- **API endpoints** — Each route or server action
+- **API endpoints** — Each tRPC router procedure (never Server Actions)
 - **Data models** — Each Prisma model or migration
 - **Dependencies** — What depends on what
 
@@ -92,9 +92,9 @@ Prisma Schema
     ↓
 Types/Interfaces
     ↓
-Server Actions / API Routes
+tRPC Routers
     ↓
-Hooks (data fetching)
+Hooks (data fetching with tRPC)
     ↓
 Components
     ↓
@@ -293,9 +293,9 @@ Use consistent labels across projects:
    ↓
 2. Type definitions / interfaces
    ↓
-3. Server actions / API routes
+3. tRPC routers (never Server Actions)
    ↓
-4. Custom hooks (useUser, useOrders)
+4. Custom hooks (useUser, useOrders) - using tRPC
    ↓
 5. UI components
    ↓
@@ -392,6 +392,7 @@ gh project item-add <number> --owner <owner> --url <issue-url>
 
 ## Related
 
+- [tRPC](./trpc.md) - API patterns (never use Server Actions)
 - [Engineering Requirements Document](./erd.md) - How to write ERDs
 - [Product Requirements Document](../product/prd.md) - Product requirements that inform ERDs
 - [Implement Ticket](./implement-ticket.md) - Process for completing tickets
