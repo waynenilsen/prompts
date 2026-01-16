@@ -16,6 +16,8 @@ Modular bootstrap scripts for creating new projects with the full stack.
   - `07-setup-typedoc.sh` - Setup TypeDoc
   - `08-setup-testing.sh` - Setup Bun test and Playwright
   - `09-setup-env.sh` - Setup environment files and scripts
+  - `10-setup-readme.sh` - Replace default README with project docs
+  - `11-setup-agents.sh` - Create AGENTS.md for AI coding assistants
 
 ## Usage
 

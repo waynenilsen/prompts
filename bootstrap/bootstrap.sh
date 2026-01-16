@@ -104,18 +104,26 @@ log "Step 8: Setting up Testing"
 log "Step 9: Setting up Environment"
 "$BOOTSTRAP_DIR/scripts/09-setup-env.sh"
 
-# Step 10: Install prompts
-log "Step 10: Installing prompts"
+# Step 10: Setup README
+log "Step 10: Setting up README"
+"$BOOTSTRAP_DIR/scripts/10-setup-readme.sh"
+
+# Step 11: Setup AGENTS.md
+log "Step 11: Setting up AGENTS.md"
+"$BOOTSTRAP_DIR/scripts/11-setup-agents.sh"
+
+# Step 12: Install prompts
+log "Step 12: Installing prompts"
 "$PROMPTS_DIR/install.sh" "$(pwd)"
 
-# Step 11: Generate Prisma client and push schema
-log "Step 11: Generating Prisma client"
+# Step 13: Generate Prisma client and push schema
+log "Step 13: Generating Prisma client"
 bunx prisma generate
 bunx prisma db push
 success "Prisma client generated and schema pushed"
 
-# Step 12: Verify setup
-log "Step 12: Verifying setup..."
+# Step 14: Verify setup
+log "Step 14: Verifying setup..."
 
 # Format code first
 log "Formatting code with Biome..."
