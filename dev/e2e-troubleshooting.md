@@ -2,6 +2,18 @@
 
 Common issues and solutions when E2E tests fail.
 
+## Debugging Strategy
+
+**Use `console.log()` statements liberally when debugging E2E tests.** Add them throughout your test at key points to understand what's happening:
+
+- Before and after navigation
+- Before and after interactions (clicks, typing, etc.)
+- When checking element states or visibility
+- When verifying data or content
+- After waiting for elements or network requests
+
+**Once you identify the root cause, remove all debug `console.log()` statements.** They're temporary debugging aids to help you understand the test flow, not permanent test code.
+
 ---
 
 ## Poor Targeting: Missing Data Test IDs
@@ -339,11 +351,28 @@ When E2E tests fail, follow this workflow:
    ```typescript
    await page.screenshot({ path: "debug.png" });
    ```
-7. **Add debug logging** — Print state at key points:
+7. **Add debug logging liberally** — Use `console.log()` statements throughout your test to understand what's happening:
+
    ```typescript
    console.log("Current URL:", page.url());
    console.log("Element visible:", await element.isVisible());
+   console.log(
+     "Element count:",
+     await page.locator("[data-testid=item]").count()
+   );
+   console.log("Page title:", await page.title());
+   console.log("Text content:", await element.textContent());
    ```
+
+   **Add console.log statements at key points:**
+
+   - Before and after navigation
+   - Before and after clicking elements
+   - After waiting for elements
+   - When checking element states
+   - When verifying data or content
+
+   **Once you identify the root cause, remove all debug console.log statements** — They're temporary debugging aids, not permanent test code.
 
 ---
 
