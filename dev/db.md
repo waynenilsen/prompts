@@ -191,6 +191,65 @@ git commit -m "feat(db): add user table schema and migration"
 
 ---
 
+## Active Development vs Production Migrations
+
+### During Active Development
+
+When actively developing and iterating on schema changes, using `prisma db push` with data-destroying flags is fine:
+
+```bash
+# During active dev - destroys local data, that's OK
+bunx prisma db push --force-reset
+
+# Or use migrate dev which also resets
+bunx prisma migrate dev --name <name>
+```
+
+**Why this is safe:** Your local SQLite database (`databases/dev.db`) is just a local copy. It's fine to destroy data during active development. You're iterating quickly and don't need to preserve test data.
+
+### Creating Production-Safe Migrations
+
+However, when you're ready to commit a migration for production, you need to ensure the migration is production-safe:
+
+1. **See what the migration should look like:** Use `prisma db push` to see what changes Prisma would make, then create the migration:
+   ```bash
+   # See what changes would be made
+   bunx prisma db push --preview-feature
+   
+   # Then create the actual migration
+   bunx prisma migrate dev --name <name>
+   ```
+
+2. **Review and edit the migration file:** Before committing, review `prisma/migrations/<timestamp>_<name>/migration.sql`:
+   - **Data migration:** If you're changing column types or removing columns, you may need to add data migration steps
+   - **Backward compatibility:** Ensure the migration can run on production databases with existing data
+   - **Performance:** Add indexes if needed, handle large tables appropriately
+
+3. **Test the migration:** After editing, test it:
+   ```bash
+   # Reset and apply migrations from scratch
+   bunx prisma migrate reset
+   bunx prisma migrate deploy
+   ```
+
+**Example: Adding data migration to a schema change**
+
+```sql
+-- prisma/migrations/20240102000000_add_user_bio/migration.sql
+
+-- Add the column (nullable first for safety)
+ALTER TABLE "User" ADD COLUMN "bio" TEXT;
+
+-- Migrate existing data if needed
+UPDATE "User" SET "bio" = "description" WHERE "bio" IS NULL AND "description" IS NOT NULL;
+
+-- Now you could make it non-nullable in a follow-up migration if needed
+```
+
+**Remember:** Your local database is just SQLite - it's fine to experiment, reset, and iterate. But the migration you commit must work for production databases with real data.
+
+---
+
 ## Ticket Breakdown: Schema and Migration Separation
 
 When breaking down tickets from an ERD, **separate out the creation of the database schema AND migration** as a distinct ticket.
