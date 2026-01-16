@@ -2,8 +2,6 @@ ref [what-is-a-promptgram](./what-is-a-promptgram.md)
 
 begin
 
-defer [cleanup](../dev/cleanup.md)
-
 CRITICAL RULE: Ralph works on EXACTLY ONE ticket per run. Once that ticket is complete, ralph MUST STOP. Do not work on another ticket. Do not create PRDs or ERDs. Ralph is DONE.
 
 check git diff staged
@@ -41,9 +39,8 @@ if clean
 
         CRITICAL: After creating tickets, STOP. Do not work on any tickets. Ralph is DONE.
 
-if not clean
-    # E2E preflight check - run FIRST before continuing ticket work
-    run bun run test:e2e
+if not clean # E2E preflight check - run FIRST before continuing ticket work
+run bun run test:e2e
 
     if e2e tests fail
         fix the broken e2e tests ref [e2e-testing](../dev/e2e-testing.md)
@@ -53,5 +50,3 @@ if not clean
     use gh, check the tickets in the project, you're probably working on the current ticket, use whats already staged to figure it out, keep working on the ticket ref [implement-ticket](../dev/implement-ticket.md) (skip e2e preflight, already done)
 
 CRITICAL: After completing the current ticket, STOP. Do not work on another ticket. Ralph is DONE.
-
-at end ALWAYS [cleanup](../dev/cleanup.md)
