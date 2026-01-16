@@ -22,6 +22,7 @@ Developer guides and conventions for this project.
 - [Email](./email.md) - React Email templates, Mailhog dev server, SendGrid production
 - [Database Schema and Migrations](./db.md) - Schema changes and migration management
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
+- [E2E Testing](./e2e-testing.md) - Single serial test suite strategy
 - [Frontend Architecture](./frontend.md) - Component organization, hooks, shadcn/ui patterns
 - [Engineering Requirements Document](./erd.md) - Technical specs and design docs
 - [Create Tickets from ERD](./create-tickets-from-erd.md) - Break ERD into ordered backlog (via `gh` CLI)
@@ -37,7 +38,7 @@ Developer guides and conventions for this project.
 - **SQLite only** — no Postgres, MySQL, or cloud databases
 - **GitHub CLI (`gh`)** for all ticket operations
 - **Unit tests next to source** — no `tests/` directory
-- **E2E tests in `e2e/`** — use `*.e2e.ts`, not `*.e2e.test.ts`
+- **E2E tests in `e2e/`** — single serial test suite, use `*.e2e.ts`, not `*.e2e.test.ts` (see [E2E Testing](./e2e-testing.md))
 - **95% coverage minimum** — enforced by bunfig.toml threshold
 - **One database per test** — enables parallel execution
 - **tRPC for all APIs** — never use Server Actions (except rare cookie writes in auth flows)

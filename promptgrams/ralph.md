@@ -14,11 +14,19 @@ if clean
 
     pull master
 
+    # E2E preflight check - run FIRST before any ticket work
+    run bun run test:e2e
+
+    if e2e tests fail
+        fix the broken e2e tests ref [e2e-testing](../dev/e2e-testing.md)
+        CRITICAL: Ralph must fix broken E2E tests before proceeding. This is the primary task.
+        once e2e tests pass, continue
+
     find the next ticket to work on in the git project assoc with .
 
     if there is another ticket
 
-    	work on the ticket ref [implement-ticket](../dev/implement-ticket.md)
+    	work on the ticket ref [implement-ticket](../dev/implement-ticket.md) (skip e2e preflight, already done)
 
     	CRITICAL: After completing this ONE ticket, STOP. Do not work on another ticket. Do not continue. Ralph is DONE.
 
@@ -34,7 +42,15 @@ if clean
         CRITICAL: After creating tickets, STOP. Do not work on any tickets. Ralph is DONE.
 
 if not clean
-use gh, check the tickets in the project, you're probably working on the current ticket, use whats already staged to figure it out, keep working on the ticket ref [implement-ticket](../dev/implement-ticket.md)
+    # E2E preflight check - run FIRST before continuing ticket work
+    run bun run test:e2e
+
+    if e2e tests fail
+        fix the broken e2e tests ref [e2e-testing](../dev/e2e-testing.md)
+        CRITICAL: Ralph must fix broken E2E tests before proceeding. This is the primary task.
+        once e2e tests pass, continue
+
+    use gh, check the tickets in the project, you're probably working on the current ticket, use whats already staged to figure it out, keep working on the ticket ref [implement-ticket](../dev/implement-ticket.md) (skip e2e preflight, already done)
 
 CRITICAL: After completing the current ticket, STOP. Do not work on another ticket. Ralph is DONE.
 

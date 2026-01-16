@@ -415,6 +415,43 @@ const statusBadgeVariants = cva(
 
 **Critical:** Do NOT use `.e2e.test.ts` for Playwright tests. Bun will pick them up and fail.
 
+### Data Test IDs (Required for E2E)
+
+**All interactive elements must have `data-testid` attributes for E2E testing.**
+
+When implementing features, add `data-testid` to:
+- Buttons (submit, cancel, action buttons)
+- Form inputs (text fields, checkboxes, selects, textareas)
+- Navigation links and menu items
+- Interactive components (modals, dropdowns, tabs, accordions)
+- Any element that needs to be clicked, filled, or verified in tests
+
+**Example:**
+
+```tsx
+// ✓ Good - elements have data-testid
+<button data-testid="submit-button" type="submit">
+  Submit
+</button>
+
+<input
+  data-testid="email-input"
+  name="email"
+  type="email"
+/>
+
+<nav>
+  <a data-testid="nav-dashboard" href="/dashboard">Dashboard</a>
+</nav>
+```
+
+**Naming convention:** Use kebab-case, descriptive of the element's purpose:
+- `submit-button` (not `btn` or `submitBtn`)
+- `email-input` (not `email` or `emailField`)
+- `user-menu-dropdown` (not `menu` or `dropdown`)
+
+See [E2E Testing](./e2e-testing.md#data-test-ids) for complete requirements.
+
 ### Unit Tests (bun test)
 
 Unit tests live next to their source files:
@@ -439,53 +476,32 @@ bun test
 
 ### E2E Tests (Playwright)
 
-E2E tests live in a dedicated directory:
+E2E tests use a **single serial test suite** that exercises the entire application. See [E2E Testing](./e2e-testing.md) for complete strategy.
+
+**Key points:**
+- Single test suite executed serially (not parallel)
+- Reusable helper functions in `e2e/helpers/`
+- Flow functions in `e2e/flows/`
+- Files kept under 1000 lines (refactor with barrel exports if needed)
 
 ```
 e2e/
-├── auth.e2e.ts
-├── dashboard.e2e.ts
-└── checkout.e2e.ts
-```
-
-```typescript
-// e2e/auth.e2e.ts
-import { test, expect } from "@playwright/test";
-
-test("user can log in", async ({ page }) => {
-  await page.goto("/login");
-  await page.fill("[name=email]", "alice@example.com");
-  await page.fill("[name=password]", "password123");
-  await page.click("button[type=submit]");
-
-  await expect(page).toHaveURL("/dashboard");
-});
+├── index.e2e.ts          # Main test suite
+├── helpers/
+│   ├── auth.ts          # Authentication helpers
+│   ├── navigation.ts    # Navigation helpers
+│   └── index.ts         # Barrel export
+└── flows/
+    ├── auth-flow.ts     # Authentication flow
+    └── index.ts         # Barrel export
 ```
 
 ```bash
 # Run E2E tests
-bunx playwright test
+bun run test:e2e
 ```
 
-### Playwright Configuration
-
-```typescript
-// playwright.config.ts
-import { defineConfig } from "@playwright/test";
-
-const isTty = process.stdout.isTTY;
-
-export default defineConfig({
-  testDir: "./e2e",
-  testMatch: "**/*.e2e.ts", // Only .e2e.ts files
-  reporter: isTty ? [["html", { open: "never" }]] : [["line"]],
-  webServer: {
-    command: "bun run dev",
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-  },
-});
-```
+**See [E2E Testing](./e2e-testing.md) for complete documentation.**
 
 ---
 

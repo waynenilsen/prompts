@@ -586,10 +586,10 @@ const isTty = process.stdout.isTTY;
 export default defineConfig({
   testDir: "./e2e",
   testMatch: "**/*.e2e.ts", // NOT .e2e.test.ts - bun will pick those up!
-  fullyParallel: true,
+  fullyParallel: false, // CRITICAL: Run serially
+  workers: 1, // CRITICAL: Single worker for serial execution
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
   reporter: isTty ? [["html", { open: "never" }]] : [["line"]],
   use: {
     baseURL: "http://localhost:3000",
@@ -603,16 +603,11 @@ export default defineConfig({
 });
 ```
 
-E2E tests live in `e2e/` directory with `*.e2e.ts` extension:
+**Critical:** 
+- `fullyParallel: false` and `workers: 1` ensure serial execution (single test suite)
+- Do NOT use `.e2e.test.ts` extension. Bun's test runner will pick up anything with `.test.ts` and fail.
 
-```
-e2e/
-├── auth.e2e.ts
-├── dashboard.e2e.ts
-└── users.e2e.ts
-```
-
-**Critical:** Do NOT use `.e2e.test.ts` extension. Bun's test runner will pick up anything with `.test.ts` and fail when it can't run Playwright tests.
+**E2E test structure:** See [E2E Testing](./e2e-testing.md) for complete strategy (single serial test suite with helpers and flows).
 
 Add test scripts:
 

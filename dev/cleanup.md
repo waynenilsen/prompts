@@ -151,11 +151,13 @@ tests/
 
 ### E2E Tests with Wrong Extension
 
-E2E tests must use `*.e2e.ts` in the `e2e/` directory:
+E2E tests must use `*.e2e.ts` in the `e2e/` directory. See [E2E Testing](./e2e-testing.md) for complete strategy.
 
 ```
 e2e/
-├── auth.e2e.ts         # ✓ Correct
+├── index.e2e.ts         # ✓ Correct
+├── helpers/
+└── flows/
 ```
 
 NOT `*.e2e.test.ts` (bun will pick these up):

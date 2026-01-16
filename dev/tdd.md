@@ -51,13 +51,13 @@ src/
 
 ### E2E Tests
 
-E2E tests are the exception. They test user flows across the entire application and live in a dedicated directory:
+E2E tests are the exception. They use a **single serial test suite** that exercises the entire application. See [E2E Testing](./e2e-testing.md) for complete strategy.
 
 ```
 e2e/
-├── auth.e2e.ts
-├── dashboard.e2e.ts
-└── checkout.e2e.ts
+├── index.e2e.ts          # Main test suite
+├── helpers/              # Reusable helper functions
+└── flows/                # Complete user flow functions
 ```
 
 ---
@@ -437,6 +437,7 @@ The test must fail because your logic is wrong, not because your code doesn't ex
 ## Related
 
 - [Unit Testing](./unit-testing.md) - Database isolation, coverage thresholds, parallelism
+- [E2E Testing](./e2e-testing.md) - Single serial test suite strategy
 - [Frontend Architecture](./frontend.md) - Testing hooks and components
 - [Project Setup](./setup.md) - Setting up bun test and Playwright
 - [Implement Ticket](./implement-ticket.md) - Full ticket workflow that uses TDD

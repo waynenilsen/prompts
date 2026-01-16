@@ -14,9 +14,13 @@ Before writing any feature code, confirm the project is set up correctly. See [P
 bun run check      # format + lint passes
 bun run docs       # TypeDoc compiles
 bun test           # unit tests pass
-bun run test:e2e   # e2e tests pass
+bun run test:e2e   # e2e tests pass (skip if already done in Ralph preflight)
 bun run build      # build succeeds
 ```
+
+**E2E Preflight Check:**
+- **If running in Ralph loop:** E2E tests are already run in Ralph's preflight check. Skip `bun run test:e2e` here.
+- **If running standalone:** Run `bun run test:e2e` as part of foundation verification.
 
 **CRITICAL: If running in a Ralph loop and any of these fail, your job is to get the tests running.**
 
@@ -50,6 +54,7 @@ This is not optional. Moving the ticket signals to the team that work has begun 
 If working on authentication, read [Authentication](./auth.md) first.
 If working on API endpoints, read [tRPC](./trpc.md) first. **Never use Server Actions** (except rare cookie writes in auth flows).
 If working on database schema changes, read [Database Schema and Migrations](./db.md) first. **Schema changes MUST include migrations in the same commit.**
+If working on frontend components, read [Frontend Architecture](./frontend.md) first. **All interactive elements must have `data-testid` attributes for E2E testing.**
 If instructed to serviceize Ralph, read [Ralph Service Mode](./auth.md#ralph-service-mode-systemd) first.
 
 ### 4. Understand the Ticket
@@ -296,9 +301,11 @@ Always run `bun dev` from the project root where `package.json` exists.
 bun run check       # format + lint
 bun run docs        # TypeDoc compiles
 bun test            # all unit tests
-bun run test:e2e    # all e2e tests
+bun run test:e2e    # all e2e tests (always run after implementation)
 bun run build       # production build
 ```
+
+**Note:** E2E tests are always run after implementation, regardless of whether they were run in Ralph's preflight check. This ensures your changes didn't break anything.
 
 All must pass.
 
@@ -320,6 +327,7 @@ Check for:
 - Copy-pasted code that should be extracted
 - Unused variables or imports
 - Tests in wrong location (should be next to source, not in `tests/`)
+- Missing `data-testid` attributes on interactive elements (buttons, inputs, links, etc.)
 
 ### 3. Commit
 
@@ -413,6 +421,7 @@ Before marking a ticket as done:
 - [ ] All acceptance criteria are met
 - [ ] Tests exist for new functionality
 - [ ] Tests are next to source files (`*.test.ts`)
+- [ ] All interactive elements have `data-testid` attributes
 - [ ] E2E tests use `*.e2e.ts` in `e2e/` directory
 - [ ] Coverage meets 95% threshold (see [Unit Testing](./unit-testing.md))
 - [ ] `bun run check` passes
@@ -431,7 +440,7 @@ Before marking a ticket as done:
 ## Quick Reference
 
 ```bash
-# Before starting
+# Before starting (if not in Ralph loop - Ralph already runs E2E preflight)
 gh issue view <number>
 gh issue edit <number> --add-label "in progress"
 bun run check && bun run docs && bun test && bun run test:e2e && bun run build
@@ -465,6 +474,7 @@ Tests fail? Docs broken? Fix them. All of them. Then push.
 
 ## Related
 
+- [E2E Testing](./e2e-testing.md) - Single serial test suite strategy
 - [tRPC](./trpc.md) - End-to-end type-safe APIs, never use Server Actions
 - [Authentication](./auth.md) - Email/password auth, session management, no RLS
 - [Database Schema and Migrations](./db.md) - Schema changes and migration management

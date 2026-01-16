@@ -44,13 +44,14 @@ export default function Home() {
         className="flex flex-col items-center gap-4"
       >
         <input
+          data-testid="name-input"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your name"
           className="rounded-md border border-input bg-background px-4 py-2 text-lg"
         />
-        <h1 className="text-4xl font-bold">
+        <h1 data-testid="greeting" className="text-4xl font-bold">
           {isLoading ? 'Loading...' : data}
         </h1>
       </form>
