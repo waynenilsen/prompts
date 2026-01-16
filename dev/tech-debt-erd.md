@@ -43,7 +43,7 @@ This corresponds to a tech debt PRD cycle. Every 5th cycle is dedicated to payin
 
 ### 2. Identify Tech Debt Categories
 
-Tech debt manifests in three primary forms:
+Tech debt manifests in five primary forms:
 
 #### Code Duplication
 
@@ -125,6 +125,169 @@ Coverage reports will show gaps. Address them systematically.
 - Extract hooks from components (see [Frontend Architecture](./frontend.md))
 - Extract constants from magic numbers
 - Ensure schema changes and migrations are committed together (see [Database Schema and Migrations](./db.md))
+
+#### God Mode / God Classes
+
+**Symptoms:**
+
+- Single files exceeding 500+ lines
+- Classes or modules with too many responsibilities
+- Files that import from dozens of other modules
+- Abstractions that handle multiple unrelated concerns
+- Difficult to test due to size and complexity
+- Hard to understand or modify without breaking other parts
+- Barrel exports (`index.ts`) that re-export everything from a single large file
+
+**Remediation:**
+
+- Break large files into smaller, focused modules (single responsibility principle)
+- Split god classes into multiple smaller classes or functions
+- **Consider existing abstractions and design patterns** when refactoring (e.g., Repository pattern, Factory pattern, Strategy pattern, Observer pattern) rather than reinventing solutions
+- Use barrel exports (`index.ts`) to organize related exports, not to hide large implementations
+- Each module should have its own unit test file (`*.test.ts`)
+- Extract related functionality into separate files with clear boundaries
+- Group related exports in barrel files, but keep implementations separate
+- Aim for files under 300 lines (200 lines ideal)
+
+**Example:**
+
+```typescript
+// Before: God class in single file
+// src/lib/users.ts (800+ lines)
+export class UserManager {
+  // Authentication logic
+  // Authorization logic
+  // CRUD operations
+  // Email sending
+  // Validation
+  // Caching
+  // Analytics
+  // ... too many responsibilities
+}
+
+// After: Split into focused modules
+// src/lib/users/auth.ts
+export function authenticateUser(email: string, password: string) { ... }
+
+// src/lib/users/authorization.ts
+export function checkPermission(userId: string, resource: string) { ... }
+
+// src/lib/users/crud.ts
+export function createUser(data: UserData) { ... }
+export function updateUser(id: string, data: Partial<UserData>) { ... }
+
+// src/lib/users/index.ts (barrel export)
+export * from './auth';
+export * from './authorization';
+export * from './crud';
+export * from './types';
+
+// Each file has its own test:
+// src/lib/users/auth.test.ts
+// src/lib/users/authorization.test.ts
+// src/lib/users/crud.test.ts
+```
+
+**Verification:**
+
+- Check file sizes: `find src -name "*.ts" -o -name "*.tsx" | xargs wc -l | sort -rn`
+- Review imports: files importing from 10+ modules may be doing too much
+- Check test coverage: large files often have incomplete test coverage
+
+#### Spaghetti Code
+
+**Symptoms:**
+
+- Unclear control flow with deeply nested conditionals
+- Functions with multiple return points scattered throughout
+- Circular dependencies between modules
+- Unclear data flow (data passed through many layers without clear purpose)
+- Mixed levels of abstraction in the same function
+- Long parameter lists (5+ parameters)
+- Functions that do multiple unrelated things
+- Global state mutations from multiple places
+- Inconsistent error handling patterns
+- Code that's hard to follow linearly
+
+**Remediation:**
+
+- Extract functions to reduce nesting (early returns, guard clauses)
+- Break complex functions into smaller, single-purpose functions
+- **Consider existing abstractions and design patterns** when refactoring (e.g., Command pattern, Chain of Responsibility, State pattern, Template Method) rather than creating ad-hoc solutions
+- Use clear variable names that express intent
+- Eliminate circular dependencies by introducing interfaces or dependency inversion
+- Establish clear data flow patterns (unidirectional where possible)
+- Use consistent error handling (see [Error Handling Patterns](./frontend.md))
+- Reduce function parameters by grouping related data into objects
+- Extract complex conditionals into well-named functions or variables
+- Use composition to build complex behavior from simple parts
+- Apply consistent patterns throughout the codebase
+
+**Example:**
+
+```typescript
+// Before: Spaghetti code
+function processOrder(order: Order, user: User, payment: Payment, inventory: Inventory, email: EmailService, logger: Logger) {
+  if (order) {
+    if (user) {
+      if (user.isActive) {
+        if (payment) {
+          if (payment.isValid) {
+            if (inventory) {
+              if (inventory.hasStock(order.items)) {
+                // ... 50 more lines of nested logic
+                if (email) {
+                  email.send(order.id);
+                }
+              } else {
+                logger.error('no stock');
+              }
+            }
+          } else {
+            logger.error('invalid payment');
+          }
+        }
+      } else {
+        logger.error('inactive user');
+      }
+    }
+  }
+}
+
+// After: Clear, linear flow with early returns
+function processOrder(params: ProcessOrderParams) {
+  const { order, user, payment, inventory, emailService, logger } = params;
+  
+  if (!order) throw new Error('Order required');
+  if (!isActiveUser(user)) throw new Error('User must be active');
+  if (!isValidPayment(payment)) throw new Error('Invalid payment');
+  if (!hasStock(inventory, order.items)) throw new Error('Insufficient stock');
+  
+  const result = fulfillOrder(order, inventory);
+  emailService.sendOrderConfirmation(order.id);
+  
+  return result;
+}
+
+function isActiveUser(user: User): boolean {
+  return user?.isActive === true;
+}
+
+function isValidPayment(payment: Payment): boolean {
+  return payment?.isValid === true;
+}
+
+function hasStock(inventory: Inventory, items: OrderItem[]): boolean {
+  return items.every(item => inventory.hasItem(item.id, item.quantity));
+}
+```
+
+**Verification:**
+
+- Review cyclomatic complexity: functions with complexity > 10 need refactoring
+- Check for circular dependencies: `npx madge --circular src`
+- Trace data flow: can you follow data from input to output?
+- Review function length: functions > 50 lines often need splitting
 
 #### Security Vulnerabilities
 
@@ -339,6 +502,8 @@ What context led to this tech debt cycle? Link to:
 - Reduce code duplication by X%
 - Increase test coverage to 95%
 - Align codebase with prompts folder directives
+- Break down god classes/files into focused modules with barrel exports
+- Refactor spaghetti code into clear, linear control flow
 - Remediate security vulnerabilities (XSS, SQL injection, insecure cookies, etc.)
 - Improve maintainability without changing functionality
 
@@ -358,10 +523,12 @@ Create a systematic inventory of tech debt:
 | Code Duplication   | `src/lib/users.ts`, `src/lib/admins.ts` | High     | Medium | 1        |
 | Missing Tests      | `src/hooks/use-orders.ts`               | Medium   | Low    | 2        |
 | Server Action      | `src/app/api/users/route.ts`            | High     | Medium | 3        |
-| XSS Vulnerability  | `src/components/Comment.tsx`            | High     | Low    | 4        |
-| Insecure Cookies   | `src/lib/auth.ts`                       | High     | Low    | 5        |
-| Missing Auth Check | `src/server/routers/admin.ts`           | High     | Medium | 6        |
-| Hardcoded Values   | `src/components/Payment.tsx`            | Low      | Low    | 7        |
+| God Class          | `src/lib/order-manager.ts` (800+ lines) | High     | High   | 4        |
+| Spaghetti Code     | `src/components/Checkout.tsx`           | Medium   | Medium | 5        |
+| XSS Vulnerability  | `src/components/Comment.tsx`            | High     | Low    | 6        |
+| Insecure Cookies   | `src/lib/auth.ts`                       | High     | Low    | 7        |
+| Missing Auth Check | `src/server/routers/admin.ts`           | High     | Medium | 8        |
+| Hardcoded Values   | `src/components/Payment.tsx`            | Low      | Low    | 9        |
 
 **Severity levels:**
 
@@ -388,9 +555,14 @@ Use requirement IDs for traceability.
 | REQ-005 | All cookies shall use secure, httpOnly, and sameSite flags             | Must     |
 | REQ-006 | All protected routes shall verify authentication and authorization     | Must     |
 | REQ-007 | All user input shall be validated with Zod schemas                     | Must     |
-| REQ-008 | All hardcoded values shall be extracted to constants                   | Should   |
-| REQ-009 | All public APIs shall have TypeDoc comments                            | Must     |
-| REQ-010 | Rate limiting shall be implemented for authentication endpoints        | Should   |
+| REQ-008 | All files exceeding 500 lines shall be split into focused modules      | Must     |
+| REQ-009 | All god classes shall be broken into smaller, single-responsibility modules | Must     |
+| REQ-010 | All barrel exports shall organize separate implementations, not hide large files | Must     |
+| REQ-011 | All complex functions (>50 lines or complexity >10) shall be refactored | Must     |
+| REQ-012 | All circular dependencies shall be eliminated                          | Must     |
+| REQ-013 | All hardcoded values shall be extracted to constants                   | Should   |
+| REQ-014 | All public APIs shall have TypeDoc comments                            | Must     |
+| REQ-015 | Rate limiting shall be implemented for authentication endpoints        | Should   |
 
 ### Remediation Strategy
 
@@ -415,13 +587,30 @@ Use requirement IDs for traceability.
 - Extract shared utilities
 - Update all call sites
 
-**Phase 4: Test Coverage**
+**Phase 4: God Classes and Large Files**
+
+- Identify files exceeding 500 lines
+- Break god classes into focused modules
+- Create barrel exports for organization
+- Ensure each module has its own unit test
+- Verify no single file exceeds 300 lines
+
+**Phase 5: Spaghetti Code**
+
+- Identify complex functions (high cyclomatic complexity)
+- Refactor deeply nested conditionals with early returns
+- Break complex functions into smaller, single-purpose functions
+- Eliminate circular dependencies
+- Establish clear data flow patterns
+- Reduce function parameters by grouping related data
+
+**Phase 6: Test Coverage**
 
 - Add missing unit tests
 - Add missing E2E tests
 - Verify 95% coverage threshold
 
-**Phase 5: Code Quality**
+**Phase 7: Code Quality**
 
 - Extract constants
 - Add TypeDoc comments
@@ -476,6 +665,12 @@ Before proceeding, verify:
 - [ ] All inputs validated with Zod schemas
 - [ ] No sensitive data in logs or error messages
 - [ ] Dependencies updated (security patches)
+- [ ] All files exceeding 500 lines split into focused modules
+- [ ] All god classes broken into smaller, single-responsibility modules
+- [ ] Barrel exports organize separate implementations, not hide large files
+- [ ] All complex functions refactored (no functions >50 lines or complexity >10)
+- [ ] All circular dependencies eliminated
+- [ ] Control flow is clear and linear (no deeply nested conditionals)
 
 ### Open Questions
 
@@ -507,6 +702,18 @@ Refactoring without tests is dangerous. Add tests first, then refactor.
 
 Don't try to fix everything at once. Focus on the highest-priority items that align with the inventory.
 
+### Creating New God Classes
+
+Breaking down a god class by creating another god class defeats the purpose. Each new module should have a single, clear responsibility.
+
+### Hiding Complexity in Barrel Exports
+
+Using barrel exports (`index.ts`) to hide large implementations doesn't solve the problem. Barrel exports should organize small, focused modules, not mask god classes.
+
+### Refactoring Without Understanding Flow
+
+Refactoring spaghetti code without first understanding the data flow and control flow can introduce bugs. Trace execution paths before restructuring.
+
 ---
 
 ## Checklist
@@ -527,6 +734,11 @@ Before requesting review:
 - [ ] All inputs validated with Zod schemas
 - [ ] No sensitive data in logs or error messages
 - [ ] Dependencies updated (security patches)
+- [ ] All files exceeding 500 lines split into focused modules
+- [ ] All god classes broken into smaller modules with barrel exports
+- [ ] All complex functions refactored (no functions >50 lines or complexity >10)
+- [ ] All circular dependencies eliminated
+- [ ] Control flow is clear and linear (no spaghetti code)
 - [ ] All verification steps pass
 - [ ] No functionality changes (refactoring only)
 
