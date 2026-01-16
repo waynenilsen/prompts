@@ -519,6 +519,7 @@ Before pushing:
 
 ## Related
 
+- [E2E Troubleshooting](./e2e-troubleshooting.md) - Common issues and debugging guide
 - [Implement Ticket](./implement-ticket.md) - E2E preflight check workflow
 - [Unit Testing](./unit-testing.md) - Unit test patterns
 - [Frontend Architecture](./frontend.md) - Component testing
