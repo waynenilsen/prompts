@@ -18,20 +18,26 @@ bun run test:e2e   # e2e tests pass (skip if already done in Ralph preflight)
 bun run build      # build succeeds
 ```
 
+**TypeScript Type Safety:**
+- **No `any` types allowed.** The project enforces a strict "no any" lint rule. Use proper types, `unknown`, or type assertions with `as` when necessary, but never use `any`.
+- If you encounter a situation where you think you need `any`, use `unknown` instead and add proper type guards or type assertions.
+
 **E2E Preflight Check:**
 - **If running in Ralph loop:** E2E tests are already run in Ralph's preflight check. Skip `bun run test:e2e` here.
 - **If running standalone:** Run `bun run test:e2e` as part of foundation verification.
 
-**CRITICAL: If running in a Ralph loop and any of these fail, your job is to get the tests running.**
+**CRITICAL: If running in a Ralph loop and any of these fail, your job is to get the tests running. Even warnings must be addressed.**
 
 If foundation verification fails while in a Ralph loop:
 
-- **Do not ignore test failures** — they must be fixed before proceeding
+- **Do not ignore test failures or warnings.** — they must be fixed before proceeding
 - **Consider environmental factors** — missing dependencies, incorrect Node/Bun versions, database not initialized, environment variables not set, port conflicts, etc.
 - **Get the tests working** — this becomes your primary task. Do not proceed with ticket work until the foundation is solid
 - **Investigate systematically** — check error messages, verify setup steps from [Project Setup](./setup.md), ensure all prerequisites are met
 
-**If any of these fail, fix them first.** Don't build on a broken foundation.
+**If any of these fail, fix them first.** Don't build on a broken foundation. If you are in a ralph loop you may commit, push, and exit at that point.
+
+I have seen "Since these are existing warnings and not errors, I can proceed with the ticket implementation. Let me update my todo list and move to the next step." in agent output before, this is COMPLETELY not acceptable and a completely wrong way of thinking about things.
 
 ### 2. Move the Ticket to In Progress
 
@@ -328,6 +334,7 @@ Check for:
 - Unused variables or imports
 - Tests in wrong location (should be next to source, not in `tests/`)
 - Missing `data-testid` attributes on interactive elements (buttons, inputs, links, etc.)
+- Use of `any` type (use `unknown` with proper type guards instead)
 
 ### 3. Commit
 
@@ -424,13 +431,14 @@ Before marking a ticket as done:
 - [ ] All interactive elements have `data-testid` attributes
 - [ ] E2E tests use `*.e2e.ts` in `e2e/` directory
 - [ ] Coverage meets 95% threshold (see [Unit Testing](./unit-testing.md))
-- [ ] `bun run check` passes
+- [ ] `bun run check` passes (includes no-any lint rule)
 - [ ] `bun run docs` passes
 - [ ] `bun test` passes (with coverage)
 - [ ] `bun run test:e2e` passes
 - [ ] `bun run build` passes
 - [ ] No debug statements in code
 - [ ] No commented-out code
+- [ ] No `any` types used (use `unknown` with type guards if needed)
 - [ ] Commit message follows convention
 - [ ] CI is green
 - [ ] Ticket updated via `gh` CLI
