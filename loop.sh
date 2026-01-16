@@ -69,8 +69,12 @@ main() {
   [ "$MAX_ITERATIONS" -gt 0 ] && echo -e "${DIM}max iterations: ${MAX_ITERATIONS}${RESET}"
   echo ""
 
+  # Source bashrc to ensure agent has access to environment
+  [ -f ~/.bashrc ] && source ~/.bashrc || [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+
   while true; do
     ITERATION=$((ITERATION + 1))
+
 
     echo -e "${CYAN}━━━ iteration ${ITERATION} ━━━${RESET}"
     echo ""
