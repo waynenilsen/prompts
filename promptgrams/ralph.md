@@ -17,8 +17,7 @@ if clean
 
     if e2e tests fail
         fix the broken e2e tests ref [e2e-testing](../dev/e2e-testing.md)
-        CRITICAL: Ralph must fix broken E2E tests before proceeding. This is the primary task.
-        once e2e tests pass, continue
+        CRITICAL: Ralph must fix broken E2E tests before proceeding. This is the primary task. Once fixed, EXIT.
 
     find the next ticket to work on in the git project assoc with .
 
