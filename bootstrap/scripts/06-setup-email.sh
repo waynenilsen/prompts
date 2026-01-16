@@ -45,19 +45,33 @@ const mailhogTransport = nodemailer.createTransport({
   secure: false,
 });
 
-interface SendEmailOptions {
+/**
+ * Options for sending an email.
+ */
+export interface SendEmailOptions {
   to: string | string[];
   subject: string;
   template: React.ReactElement;
   from?: string;
 }
 
-interface SendEmailResult {
+/**
+ * Result of sending an email.
+ */
+export interface SendEmailResult {
   success: boolean;
   messageId?: string;
   error?: Error;
 }
 
+/**
+ * Sends an email using the configured transport.
+ * In local/test stages, uses Mailhog or console logging.
+ * In production, uses SendGrid.
+ *
+ * @param options - Email options including recipient, subject, and React template
+ * @returns Promise resolving to send result with success status and message ID
+ */
 export async function sendEmail({
   to,
   subject,
@@ -116,11 +130,18 @@ import {
   Hr,
 } from '@react-email/components';
 
-interface WelcomeEmailProps {
+/**
+ * Props for the welcome email template.
+ */
+export interface WelcomeEmailProps {
   name: string;
   loginUrl: string;
 }
 
+/**
+ * Welcome email template component.
+ * Renders a welcome email for new users.
+ */
 export function WelcomeEmail({ name, loginUrl }: WelcomeEmailProps) {
   return (
     <Html>

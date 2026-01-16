@@ -15,9 +15,21 @@ cat > typedoc.json << 'EOF'
   "entryPoints": ["src"],
   "entryPointStrategy": "expand",
   "out": "docs",
-  "exclude": ["**/*.test.ts", "**/*.e2e.ts", "**/node_modules/**", "test/**"],
+  "exclude": ["**/*.test.ts", "**/*.e2e.ts", "**/node_modules/**", "test/**", "src/components/ui/**"],
   "excludePrivate": true,
-  "skipErrorChecking": true
+  "skipErrorChecking": false,
+  "validation": {
+    "notDocumented": true
+  },
+  "requiredToBeDocumented": [
+    "Function",
+    "Method",
+    "Class",
+    "Interface",
+    "TypeAlias",
+    "Variable"
+  ],
+  "treatValidationWarningsAsErrors": true
 }
 EOF
 

@@ -19,10 +19,12 @@ bun run build      # build succeeds
 ```
 
 **TypeScript Type Safety:**
+
 - **No `any` types allowed.** The project enforces a strict "no any" lint rule. Use proper types, `unknown`, or type assertions with `as` when necessary, but never use `any`.
 - If you encounter a situation where you think you need `any`, use `unknown` instead and add proper type guards or type assertions.
 
 **E2E Preflight Check:**
+
 - **If running in Ralph loop:** E2E tests are already run in Ralph's preflight check. Skip `bun run test:e2e` here.
 - **If running standalone:** Run `bun run test:e2e` as part of foundation verification.
 
@@ -57,11 +59,34 @@ This is not optional. Moving the ticket signals to the team that work has begun 
 
 ### 3. Check Domain-Specific Guides
 
+**Documentation:** All functions must have JSDoc comments. See [Documentation Guidelines](./docs.md) for requirements. TypeDoc will fail if documentation is missing.
+
 If working on authentication, read [Authentication](./auth.md) first.
 If working on API endpoints, read [tRPC](./trpc.md) first. **Never use Server Actions** (except rare cookie writes in auth flows).
 If working on database schema changes, read [Database Schema and Migrations](./db.md) first. **Schema changes MUST include migrations in the same commit.**
 If working on frontend components, read [Frontend Architecture](./frontend.md) first. **All interactive elements must have `data-testid` attributes for E2E testing.**
+If working on E2E tests, read [E2E Testing](./e2e-testing.md) first. **E2E tests must exercise the full UI workflow. If tests reveal UI issues, you must fix them.**
 If instructed to serviceize Ralph, read [Ralph Service Mode](./auth.md#ralph-service-mode-systemd) first.
+
+#### E2E Testing Tickets
+
+**If the ticket is about implementing E2E tests, read [E2E Testing](./e2e-testing.md) before starting.**
+
+**Key principles:**
+
+- E2E tests exercise the **complete UI workflow** from the user's perspective
+- Tests reveal real UI issues — if a test fails, fix the underlying problem
+- Do not create "focused" tests that skip UI interactions or test only API behavior
+- When E2E tests reveal UI problems, fixing them is part of implementing the E2E test ticket
+
+**Gathering context:**
+
+If you need additional context to understand the desired outcome, read upstream documents:
+
+- [Engineering Requirements Document](./erd.md) - Technical specs that define requirements
+- [Product Requirements Document](../product/prd.md) - Product requirements that inform ERDs
+- [Roadmap](../roadmap/roadmap.md) - Project direction and priorities
+- Previous tickets - Related issues that provide context
 
 ### 4. Understand the Ticket
 
@@ -155,6 +180,17 @@ Your new test should pass. But you're not done.
 ## Handling Failing Tests
 
 **Every test must pass. No exceptions.**
+
+### E2E Tests Reveal Real Issues
+
+**CRITICAL:** When E2E tests fail, they often reveal real UI problems that need to be fixed. E2E tests exercise the complete user interface workflow — if they fail, it usually means:
+
+- The UI doesn't properly display or handle data
+- User interactions don't work correctly
+- Components aren't integrated properly
+- State management is broken
+
+**Do not work around E2E test failures.** Fix the underlying UI issues. See [E2E Testing](./e2e-testing.md) for the full strategy.
 
 When you see a failing test, there are two possibilities:
 

@@ -164,7 +164,7 @@ bunx biome format --write . || error "Final Biome format failed"
 success "Code formatted and linted"
 
 echo -e "${DIM}Running: bun run docs${RESET}"
-bun run docs || echo -e "${DIM}Docs generated with warnings${RESET}"
+bun run docs || error "Documentation generation failed - all exported functions, methods, classes, interfaces, type aliases, and variables must have JSDoc comments"
 
 echo -e "${DIM}Running: bun test${RESET}"
 bun test || error "Unit tests failed"

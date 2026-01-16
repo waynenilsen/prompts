@@ -6,7 +6,7 @@ End-to-end testing strategy: single serial test suite for faster CI cycles.
 
 ## Philosophy
 
-**One comprehensive test suite, executed serially, that exercises the entire functionality of the site.**
+**One comprehensive test suite, executed serially, that exercises the entire functionality of the site through the full UI workflow.**
 
 ### Why Serial? Why Single Suite?
 
@@ -19,9 +19,44 @@ Traditional E2E testing often results in hundreds of individual tests that run i
 **Our approach:** A single serial test suite that:
 
 - Exercises all functionality in one run
+- Tests the **complete UI workflow** — not just API behavior or "core logic"
 - Executes steps sequentially (no parallel workers)
 - Reuses helper functions to avoid duplication
 - Maintains fast cycle times while ensuring comprehensive coverage
+
+### E2E Tests Reveal Issues — Fix Them
+
+**CRITICAL:** E2E tests exercise the full user interface workflow. When E2E tests fail, they often reveal real UI problems that unit tests miss:
+
+- **UI doesn't properly display data** — API works, but UI doesn't render correctly
+- **Missing or broken interactions** — Buttons don't work, forms don't submit, navigation fails
+- **State management issues** — UI state doesn't update correctly after actions
+- **Integration problems** — Components don't work together properly
+
+**When implementing E2E tests, if they reveal issues, you MUST fix them.** Do not:
+
+- ✗ Create "focused" tests that skip UI interactions
+- ✗ Test only "core behavior" at the API level
+- ✗ Work around UI problems instead of fixing them
+- ✗ Assume UI issues are someone else's problem
+
+**Instead:**
+
+- ✓ Test the complete UI workflow from user's perspective
+- ✓ Fix any UI issues the tests reveal
+- ✓ Ensure the full user experience works correctly
+- ✓ Treat E2E test failures as bugs to fix, not test problems to work around
+
+### Gathering Context
+
+When implementing E2E tests, you may need additional context to understand the desired outcome. **Read upstream documents** to gather this context:
+
+- **[Engineering Requirements Document](../dev/erd.md)** - Technical specs that define ticket requirements
+- **[Product Requirements Document](../product/prd.md)** - Product requirements that inform ERDs
+- **[Roadmap](../roadmap/roadmap.md)** - Project direction and priorities
+- **Previous tickets** - Related issues that provide context on implementation decisions
+
+Understanding the full context helps ensure E2E tests accurately reflect the intended user experience.
 
 ---
 

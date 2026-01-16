@@ -19,6 +19,10 @@ import { initTRPC } from '@trpc/server';
 import superjson from 'superjson';
 import { prisma } from '@/lib/prisma';
 
+/**
+ * Creates the tRPC context for each request.
+ * Provides database access via Prisma client.
+ */
 export function createContext() {
   return { prisma };
 }
@@ -29,7 +33,16 @@ const t = initTRPC.context<Context>().create({
   transformer: superjson,
 });
 
+/**
+ * tRPC router factory.
+ * Use this to create new routers.
+ */
 export const router = t.router;
+
+/**
+ * Public procedure factory.
+ * Use this for unauthenticated routes.
+ */
 export const publicProcedure = t.procedure;
 EOF
 
@@ -38,6 +51,10 @@ cat > src/server/routers/_app.ts << 'EOF'
 import { router, publicProcedure } from '@/server/trpc';
 import { z } from 'zod';
 
+/**
+ * Root tRPC router.
+ * Combine all routers here.
+ */
 export const appRouter = router({
   hello: publicProcedure
     .input(z.object({ name: z.string() }))
@@ -46,6 +63,10 @@ export const appRouter = router({
     }),
 });
 
+/**
+ * Type-safe tRPC router type.
+ * Use this type on the client for type inference.
+ */
 export type AppRouter = typeof appRouter;
 EOF
 
@@ -56,6 +77,10 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { appRouter } from '@/server/routers/_app';
 import { createContext } from '@/server/trpc';
 
+/**
+ * tRPC API route handler.
+ * Handles both GET and POST requests for tRPC queries and mutations.
+ */
 const handler = (req: Request) =>
   fetchRequestHandler({
     endpoint: '/api/trpc',
@@ -74,8 +99,16 @@ import { httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
 import type { AppRouter } from '@/server/routers/_app';
 
+/**
+ * tRPC React hooks.
+ * Use this in components: `trpc.hello.useQuery({ name: 'World' })`
+ */
 export const trpc = createTRPCReact<AppRouter>();
 
+/**
+ * tRPC client instance.
+ * Configured with batching and superjson transformer.
+ */
 export const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
@@ -94,6 +127,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { trpc, trpcClient } from '@/lib/trpc';
 
+/**
+ * Root providers component.
+ * Wraps the app with tRPC and TanStack Query providers.
+ */
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
@@ -113,11 +150,18 @@ import type { Metadata } from 'next';
 import { Providers } from './providers';
 import './globals.css';
 
+/**
+ * Root layout metadata.
+ */
 export const metadata: Metadata = {
   title: 'Next.js App',
   description: 'Generated with bootstrap',
 };
 
+/**
+ * Root layout component.
+ * Wraps all pages with the HTML structure and providers.
+ */
 export default function RootLayout({
   children,
 }: {

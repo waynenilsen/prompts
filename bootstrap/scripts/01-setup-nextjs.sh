@@ -31,6 +31,10 @@ cat > src/app/page.tsx << 'EOF'
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 
+/**
+ * Home page component.
+ * Demonstrates tRPC integration with a simple hello query.
+ */
 export default function Home() {
   const [name, setName] = useState('World');
   const { data, isLoading } = trpc.hello.useQuery({ name });
@@ -77,11 +81,18 @@ cat > src/app/layout.tsx << 'EOF'
 import type { Metadata } from 'next';
 import './globals.css';
 
+/**
+ * Root layout metadata.
+ */
 export const metadata: Metadata = {
   title: 'Next.js App',
   description: 'Generated with bootstrap',
 };
 
+/**
+ * Root layout component.
+ * Wraps all pages with the HTML structure and providers.
+ */
 export default function RootLayout({
   children,
 }: {
@@ -109,6 +120,13 @@ cat > src/lib/utils.ts << 'EOF'
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+/**
+ * Merges class names with Tailwind CSS conflict resolution.
+ * Combines clsx and tailwind-merge to handle conditional classes and Tailwind conflicts.
+ *
+ * @param inputs - Class names or conditional class objects
+ * @returns Merged class string
+ */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
