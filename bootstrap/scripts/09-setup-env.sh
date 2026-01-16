@@ -50,6 +50,7 @@ coverage/
 # Playwright
 playwright-report/
 test-results/
+screenshots/
 
 # Environment (keep .env.example, ignore actual .env)
 .env

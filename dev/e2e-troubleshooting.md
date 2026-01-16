@@ -349,8 +349,9 @@ When E2E tests fail, follow this workflow:
    ```
 6. **Take a screenshot** — See the state when test fails:
    ```typescript
-   await page.screenshot({ path: "debug.png" });
+   await page.screenshot({ path: "screenshots/debug-failure.png" });
    ```
+   **Note:** Screenshots should be saved to `screenshots/` folder (see [E2E Testing - Screenshots](./e2e-testing.md#6-take-screenshots-during-tests) for organization guidelines).
 7. **Add debug logging liberally** — Use `console.log()` statements throughout your test to understand what's happening:
 
    ```typescript

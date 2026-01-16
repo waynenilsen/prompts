@@ -471,6 +471,140 @@ test("everything", async ({ page }) => {
 - Clean up after yourself (or use test fixtures)
 - Don't depend on external services
 
+### 6. Take Screenshots During Tests
+
+**CRITICAL: Take screenshots at key points during E2E tests.** Screenshots serve as visual documentation for vision language models to analyze and improve user experiences later.
+
+#### Purpose
+
+Screenshots enable:
+
+- **Vision language model analysis** — AI can review screenshots to identify UX improvements
+- **Visual regression detection** — Compare screenshots over time to catch UI changes
+- **Debugging** — See exactly what the page looked like when tests ran
+- **Documentation** — Visual record of how the application looks during testing
+
+#### Screenshot Organization
+
+**All screenshots must be saved in a flat `screenshots/` folder** (no nested subdirectories). Since tests run serially, screenshots are numbered sequentially based on the order they are taken during test execution.
+
+**Structure:**
+
+```
+screenshots/
+├── 01-homepage-initial.png
+├── 02-login-page.png
+├── 03-dashboard-after-login.png
+├── 04-user-profile-page.png
+└── 05-form-submission-success.png
+```
+
+**Key principle:** Each number corresponds to the sequence in which the screenshot is taken. The first screenshot taken gets `01`, the second gets `02`, and so on. This creates a chronological visual record of the test execution.
+
+#### Naming Convention
+
+Use sequential numbers and descriptive names:
+
+- `screenshots/01-homepage-initial.png`
+- `screenshots/02-login-page.png`
+- `screenshots/03-dashboard-after-login.png`
+- `screenshots/04-user-profile-page.png`
+- `screenshots/05-form-submission-success.png`
+
+**Format:** `NN-description.png` where:
+
+- `NN` = Sequential number (01, 02, 03...) corresponding to the order screenshots are taken
+- `description` = Brief kebab-case description of what's shown
+
+**Important:** The number must match the sequence. If you take 5 screenshots, they should be numbered 01 through 05 in the order they were captured.
+
+#### When to Take Screenshots
+
+Take screenshots at:
+
+- **Page loads** — After navigating to a new page
+- **Form submissions** — Before and after submitting forms
+- **State changes** — After important state transitions (login, logout, data updates)
+- **Error states** — When errors occur (for debugging)
+- **Key interactions** — After clicking buttons that change the UI significantly
+
+#### Example: Screenshots in Helper Functions
+
+Helper functions should accept a `screenshotCounter` parameter to maintain sequential numbering:
+
+```typescript
+// e2e/helpers/auth.ts
+import { Page } from "@playwright/test";
+
+export async function loginAs(
+  page: Page,
+  email: string,
+  password: string,
+  screenshotCounter: { count: number }
+) {
+  await page.goto("/login");
+  // Screenshot number increments based on when it's taken
+  await page.screenshot({
+    path: `screenshots/${String(screenshotCounter.count++).padStart(
+      2,
+      "0"
+    )}-login-page.png`,
+  });
+
+  await page.fill("[data-testid=email-input]", email);
+  await page.fill("[data-testid=password-input]", password);
+  await page.click("[data-testid=submit-button]");
+  await page.waitForURL("/dashboard");
+
+  // Next sequential number
+  await page.screenshot({
+    path: `screenshots/${String(screenshotCounter.count++).padStart(
+      2,
+      "0"
+    )}-dashboard-after-login.png`,
+  });
+}
+```
+
+**Note:** All screenshots go directly into `screenshots/` (flat structure). The counter ensures they're numbered in the order they're taken, regardless of which function captures them.
+
+#### Screenshot Counter Pattern
+
+Since tests run serially, use a shared counter object that increments with each screenshot. Pass this counter to helper functions and flows to maintain sequential numbering:
+
+```typescript
+// e2e/index.e2e.ts
+test("exercises entire application functionality", async ({ page }) => {
+  const screenshotCounter = { count: 1 };
+
+  await page.screenshot({
+    path: `screenshots/${String(screenshotCounter.count++).padStart(
+      2,
+      "0"
+    )}-homepage.png`,
+  });
+
+  await testAuthFlow(page, screenshotCounter);
+  await testUserFlow(page, screenshotCounter);
+});
+```
+
+**The counter ensures:** Screenshots are numbered sequentially (01, 02, 03...) in the exact order they are taken, regardless of which function or flow captures them.
+
+#### Gitignore
+
+**Screenshots must NOT be committed to git.** The `screenshots/` folder is automatically added to `.gitignore` during bootstrap. This ensures:
+
+- Repository stays clean (screenshots can be large)
+- Screenshots are regenerated fresh on each test run
+- No conflicts from different developers' screenshots
+
+**Verify `.gitignore` includes:**
+
+```
+screenshots/
+```
+
 ---
 
 ## File Naming
@@ -514,6 +648,9 @@ Before pushing:
 - [ ] Flows are extracted to separate files
 - [ ] Barrel exports are used for clean imports
 - [ ] Playwright config has `fullyParallel: false` and `workers: 1`
+- [ ] Screenshots are taken at key points during tests
+- [ ] Screenshots are saved to `screenshots/` folder with sequential naming
+- [ ] `screenshots/` folder is in `.gitignore` (not committed)
 
 ---
 
