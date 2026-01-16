@@ -19,16 +19,18 @@ if clean
     if there is another ticket
 
     	work on the ticket ref [implement-ticket](../dev/implement-ticket.md)
-    	
+
     	CRITICAL: After completing this ONE ticket, STOP. Do not work on another ticket. Do not continue. Ralph is DONE.
 
     if there are no tickets in the backlog
-        look at the existing PRDs
-        create the next sensible PRD ref [prd](../product/prd.md)
+        read the roadmap ref [roadmap](../roadmap/roadmap.md)
+        identify the current phase and which features need PRDs
+        create the next PRD for a feature from the current roadmap phase ref [prd](../product/prd.md)
         create the ERD to go with it ref [erd](../dev/erd.md)
         create the tickets and add them to the project ref [create-tickets-from-erd](../dev/create-tickets-from-erd.md)
+        update the roadmap to link the new PRD
         commit and push ref [conventional-commits](../dev/conventional-commits.md)
-        
+
         CRITICAL: After creating tickets, STOP. Do not work on any tickets. Ralph is DONE.
 
 if not clean
