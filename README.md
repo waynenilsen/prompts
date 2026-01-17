@@ -1,30 +1,13 @@
-# prompts
+# Prompts Repository
 
-Opinionated development workflow prompts for building zero-configuration deployable applications.
+This repository has been forked in-tree. The original content is preserved in `v1`, and `v2` is diverging from there.
 
-## The Stack
+## Structure
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js (App Router) |
-| API | tRPC + TanStack Query |
-| Styling | Tailwind CSS |
-| Components | shadcn/ui |
-| Database | Prisma + SQLite |
-| Email | React Email + Mailhog (dev) / SendGrid (prod) |
-| Runtime | Bun |
-| Hosting | Sprite |
+- `v1/` - Original repository (baseline)
+- `v2/` - Fork diverging from v1
+- `.git/` - Git repository history
 
-## Key Constraints
+## Note
 
-- **No external services** unless explicitly requested
-- **Run on checkout** — clone, install, run
-- **GitHub CLI (`gh`)** for all ticket operations
-- **Test-near-code** — unit tests next to source files
-- **tRPC for all APIs** — never use Server Actions (except rare cookie writes)
-
-## Documentation
-
-- [./dev](./dev/index.md) - Development guidelines and conventions
-- [./product](./product/index.md) - Product planning and requirements
-- [./promptgrams](./promptgrams/index.md) - Structured workflow prompts
+This is an in-tree fork - both versions are maintained within the same repository tree structure. The root directory represents the current working state, which may diverge from both v1 and v2.

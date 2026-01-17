@@ -1,0 +1,11 @@
+services:
+  ubuntu:
+    image: ubuntu:latest
+    container_name: ubuntu-test
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: /bin/bash
+    restart: unless-stopped
