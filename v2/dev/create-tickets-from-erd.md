@@ -37,9 +37,6 @@ Do NOT:
 # Check auth status
 gh auth status
 
-# Add project scope if needed
-gh auth refresh -s project
-
 # Verify you can access issues
 gh issue list
 ```
@@ -48,26 +45,13 @@ gh issue list
 
 ## Prerequisites
 
-### Identify or Create the Project
+### GitHub Projects Are Forbidden
 
-Check if a GitHub Project exists for this repo:
+**Do NOT use GitHub Projects for ticket management.**
 
-```bash
-# List projects for the repo owner
-gh project list --owner <owner>
-```
+Ticket ordering is handled automatically by the `[PRD-XXXX-TICKET-XXX]` tag format in issue titles. The `get-next-backlog-issue.sh` script reads issues directly and orders them by PRD and ticket numbers.
 
-If no project exists, create one:
-
-```bash
-# Create a new project
-gh project create --owner <owner> --title "<Project Name>"
-```
-
-After creation, configure the board view in the GitHub UI:
-1. Open the project
-2. Click the view dropdown → New view → Board
-3. Set columns to use the Status field (Backlog, In Progress, Done)
+**Why:** GitHub Projects add unnecessary complexity and manual drag-and-drop ordering. The tag-based system is scriptable, version-controlled, and works automatically.
 
 ---
 
@@ -159,12 +143,13 @@ Within each tier, order by:
 Create each ticket in dependency order:
 
 ```bash
-# Create an issue and add to project
+# Create an issue with PRD and ticket number tags
 gh issue create \
-  --title "feat(users): add user table schema" \
+  --title "[PRD-0001-TICKET-001] feat(users): add user table schema" \
   --body "$(cat <<'EOF'
 ## Context
 ERD: ERD-0001
+PRD: PRD-0001
 Depends on: None (foundation)
 
 ## Requirements
@@ -180,13 +165,19 @@ Depends on: None (foundation)
 See ERD-0001 Data Model section.
 Uses SQLite with Prisma.
 EOF
-)" \
-  --project "<Project Name>"
+)"
 ```
 
-**Ticket title format:** `<type>(<scope>): <description>`
+**Ticket title format:** `[PRD-XXXX-TICKET-XXX] <type>(<scope>): <description>`
 
-Types match conventional commits: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
+- **`[PRD-XXXX-TICKET-XXX]`** — Required tag for ordering (e.g., `[PRD-0001-TICKET-001]`)
+  - Lower PRD number = higher priority
+  - Within same PRD, lower ticket number = higher priority
+  - Issues without tags are sorted last
+- **`<type>(<scope>): <description>`** — Conventional commit format
+  - Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
+
+The `get-next-backlog-issue.sh` script automatically orders tickets by these tags.
 
 ### Step 7: Link Related Tickets
 
@@ -202,25 +193,35 @@ gh issue edit <number> --body "$(gh issue view <number> --json body -q .body)
 Blocked by: #<blocking-number>"
 ```
 
-### Step 8: Set Ticket Order in Project
+### Step 8: Verify Ticket Order
 
-After creating all tickets, ensure they're ordered correctly in the Backlog column:
+After creating all tickets, verify they're ordered correctly by running:
 
 ```bash
-# List project items to verify order
-gh project item-list <PROJECT_NUMBER> --owner <owner>
+# Get the next ticket (should be the first one you created)
+./get-next-backlog-issue.sh
 ```
 
-Reorder in the GitHub UI by dragging tickets in the Backlog column. The top ticket is next to be worked.
+Tickets are automatically ordered by the `[PRD-XXXX-TICKET-XXX]` tags in their titles. The script reads all open issues and sorts them:
+1. Tagged issues first (by PRD number, then ticket number)
+2. Untagged issues last
+
+**Do NOT use GitHub Projects** — ticket ordering is handled by title tags, not manual project boards.
 
 ---
 
 ## Ticket Template
 
+**Title format:** `[PRD-XXXX-TICKET-XXX] <type>(<scope>): <description>`
+
+Example: `[PRD-0001-TICKET-001] feat(users): add user table schema`
+
+**Body template:**
+
 ```markdown
 ## Context
 ERD: [Link to ERD, e.g., ERD-0001]
-PRD: [Link to PRD if applicable]
+PRD: [PRD number, e.g., PRD-0001]
 Depends on: [List of blocking ticket numbers, or "None"]
 Blocks: [List of tickets this unblocks, or "None"]
 
@@ -341,35 +342,29 @@ When you pick up the next ticket:
 
 Before starting burndown:
 
-- [ ] GitHub Project exists (kanban board)
-- [ ] `gh` CLI authenticated with project scope
+- [ ] `gh` CLI authenticated and can access issues
 - [ ] All tickets created from ERD requirements using `gh issue create`
+- [ ] Each ticket title includes `[PRD-XXXX-TICKET-XXX]` tag
 - [ ] Each ticket has clear acceptance criteria
 - [ ] Each ticket is INVEST-compliant (especially Small and Testable)
 - [ ] Dependencies documented in each ticket
-- [ ] Tickets ordered by dependency graph
+- [ ] Tickets ordered by dependency graph (PRD and ticket numbers)
 - [ ] No ticket depends on one below it in the backlog
 - [ ] First ticket has no dependencies
+- [ ] `get-next-backlog-issue.sh` returns the correct next ticket
 
 ---
 
 ## Quick Reference
 
 ```bash
-# Auth with project scope
-gh auth refresh -s project
+# Check auth status
+gh auth status
 
-# List existing projects
-gh project list --owner <owner>
-
-# Create new project
-gh project create --owner <owner> --title "Project Name"
-
-# Create issue and add to project
+# Create issue with PRD/ticket tag
 gh issue create \
-  --title "feat(scope): description" \
-  --body "Issue body" \
-  --project "Project Name"
+  --title "[PRD-0001-TICKET-001] feat(scope): description" \
+  --body "Issue body"
 
 # View issue
 gh issue view <number>
@@ -383,11 +378,11 @@ gh issue comment <number> --body "Update message"
 # Close issue
 gh issue close <number>
 
-# List project items
-gh project item-list <number> --owner <owner>
+# Get next ticket (ordered by PRD/ticket tags)
+./get-next-backlog-issue.sh
 
-# Add existing issue to project
-gh project item-add <number> --owner <owner> --url <issue-url>
+# List all open issues
+gh issue list --state open
 ```
 
 ---
@@ -412,5 +407,4 @@ This guide synthesizes best practices from:
 - [Scrum.org](https://www.scrum.org/resources/ordered-not-prioritized) — Ordering vs prioritization, dependency awareness
 - [Atlassian](https://www.atlassian.com/agile/project-management/epics) — Epic breakdown, user story best practices
 - [Humanizing Work](https://www.humanizingwork.com/the-humanizing-work-guide-to-splitting-user-stories/) — Story splitting techniques
-- [GitHub CLI](https://cli.github.com/manual/gh_project) — Project and issue management commands
-- [GitHub Blog](https://github.blog/developer-skills/github/github-cli-project-command-is-now-generally-available/) — gh project command documentation
+- [GitHub CLI](https://cli.github.com/manual/gh_issue) — Issue management commands

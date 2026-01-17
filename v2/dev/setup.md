@@ -54,11 +54,16 @@ Do NOT use:
 
 Use **GitHub CLI (`gh`)** for all project management:
 
-- Issues for tickets
-- Projects for kanban boards
+- Issues for tickets (with `[PRD-XXXX-TICKET-XXX]` tags for ordering)
 - PRs for code review
 
-Do NOT use Jira, Linear, Notion, or other tools. Keep everything in GitHub.
+**GitHub Projects are forbidden.** Ticket ordering is handled automatically by title tags (`[PRD-XXXX-TICKET-XXX]`), not manual project boards.
+
+Do NOT use:
+- GitHub Projects
+- Jira, Linear, Notion, or other tools
+
+Keep everything in GitHub Issues with proper tagging.
 
 ---
 

@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 #
-# loop.sh - Run ralph in a continuous development loop
+# new-outer-loop.sh - Run new-inner-loop.sh in a continuous loop
 #
 # Usage:
-#   ./loop.sh          # Run indefinitely
-#   ./loop.sh 5        # Run 5 iterations
+#   ./new-outer-loop.sh          # Run indefinitely
+#   ./new-outer-loop.sh 5         # Run 5 iterations
 #
 # Each iteration:
-#   1. Runs @promptgrams/ralph.md
-#   2. Pushes changes to remote
-#   3. Repeats
+#   1. Runs new-inner-loop.sh
+#   2. Repeats
 #
 
 set -euo pipefail
@@ -17,20 +16,18 @@ set -euo pipefail
 MAX_ITERATIONS="${1:-0}"  # 0 = unlimited
 ITERATION=0
 
+# Get absolute path to this script's directory
+pushd "$(dirname "$0")" >/dev/null
+SCRIPT_DIR="$(pwd)"
+popd >/dev/null
+
 # Colors
 CYAN='\033[0;36m'
 DIM='\033[2m'
 RESET='\033[0m'
 
-run_ralph() {
-  claude -p "run the promptgram @promptgrams/ralph.md" \
-    --dangerously-skip-permissions \
-    --output-format stream-json \
-    --verbose | cclean
-}
-
 main() {
-  echo -e "${CYAN}ralph loop starting${RESET}"
+  echo -e "${CYAN}outer loop starting${RESET}"
   [ "$MAX_ITERATIONS" -gt 0 ] && echo -e "${DIM}max iterations: ${MAX_ITERATIONS}${RESET}"
   echo ""
 
@@ -40,11 +37,10 @@ main() {
   while true; do
     ITERATION=$((ITERATION + 1))
 
-
     echo -e "${CYAN}━━━ iteration ${ITERATION} ━━━${RESET}"
     echo ""
 
-    run_ralph
+    "$SCRIPT_DIR/new-inner-loop.sh"
 
     # Check iteration limit
     if [ "$MAX_ITERATIONS" -gt 0 ] && [ "$ITERATION" -ge "$MAX_ITERATIONS" ]; then
