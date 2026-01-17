@@ -43,11 +43,11 @@ main() {
     echo "[DEBUG] new-inner-loop.sh: No upstream branch configured"
   fi
 
-  # Actually execute git fetch and pull master
+  # Actually execute git fetch and pull main
   echo "[DEBUG] new-inner-loop.sh: Running git fetch..."
   git fetch
-  echo "[DEBUG] new-inner-loop.sh: Running git pull master..."
-  git pull master
+  echo "[DEBUG] new-inner-loop.sh: Running git pull main..."
+  git pull
   echo "[DEBUG] new-inner-loop.sh: Git fetch/pull completed"
 
   # Format the code - if formatting makes changes, add everything, commit, push, and exit
@@ -91,6 +91,14 @@ main() {
   else
     echo "[DEBUG] new-inner-loop.sh: No linting changes detected"
   fi
+
+  # Install dependencies and setup Prisma before running tests
+  echo "[DEBUG] new-inner-loop.sh: Installing dependencies..."
+  bun i
+  echo "[DEBUG] new-inner-loop.sh: Generating Prisma client..."
+  bunx prisma generate
+  echo "[DEBUG] new-inner-loop.sh: Pushing Prisma schema to database..."
+  bunx prisma db push --force-reset
 
   # Run unit tests - if they fail, call claude-wrapper to fix them
   echo "[DEBUG] new-inner-loop.sh: Running unit tests..."

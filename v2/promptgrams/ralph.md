@@ -10,7 +10,7 @@ if clean
 
     git fetch
 
-    pull master
+    pull main
 
     # E2E preflight check - run FIRST before any ticket work
     run bun run test:e2e
