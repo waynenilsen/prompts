@@ -19,6 +19,29 @@ echo "[DEBUG] git-diff-staged-clean.sh: SCRIPT_DIR=$SCRIPT_DIR"
 echo "[DEBUG] git-diff-staged-clean.sh: PROMPTS_DIR=$PROMPTS_DIR"
 echo "[DEBUG] git-diff-staged-clean.sh: Current directory=$(pwd)"
 
+# Run TypeScript type check - if it fails, call claude-wrapper to fix it
+# This ensures we're in a clean state before starting new work (in case something was interrupted)
+echo "[DEBUG] git-diff-staged-clean.sh: Running TypeScript type check..."
+if ! bunx tsc --noEmit; then
+  echo "[DEBUG] git-diff-staged-clean.sh: TypeScript type check failed, calling claude-wrapper"
+  FIX_TSC_PROMPT="TypeScript type check failed. Fix all type errors."
+  "$SCRIPT_DIR/claude-wrapper.sh" "$FIX_TSC_PROMPT"
+  echo "[DEBUG] git-diff-staged-clean.sh: claude-wrapper completed, staging and committing fixes..."
+  git add -A
+  git commit -m "fix: resolve TypeScript type errors"
+  echo "[DEBUG] git-diff-staged-clean.sh: Attempting to push TypeScript fixes..."
+  if ! git push; then
+    echo "[DEBUG] git-diff-staged-clean.sh: Push failed, calling claude-wrapper"
+    PUSH_FAIL_PROMPT="i cant run git push, we all push to main, i probably just have to get the last few commits on this branch"
+    "$SCRIPT_DIR/claude-wrapper.sh" "$PUSH_FAIL_PROMPT"
+    exit 0
+  fi
+  echo "[DEBUG] git-diff-staged-clean.sh: TypeScript fixes pushed successfully, exiting"
+  exit 0
+else
+  echo "[DEBUG] git-diff-staged-clean.sh: TypeScript type check passed"
+fi
+
 # Check for next ticket in backlog
 echo "[DEBUG] git-diff-staged-clean.sh: All checks passed, checking for next ticket..."
 NEXT_TICKET_JSON=$("$SCRIPT_DIR/get-next-backlog-issue.sh" --json)

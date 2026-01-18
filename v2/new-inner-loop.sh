@@ -50,44 +50,64 @@ main() {
   git pull
   echo "[DEBUG] new-inner-loop.sh: Git fetch/pull completed"
 
+  # Check git diff staged early to detect in-flight work (for branching decision later)
+  echo "[DEBUG] new-inner-loop.sh: Checking git diff staged (early check for in-flight work)..."
+  HAS_STAGED_CHANGES=false
+  if ! git diff --cached --quiet; then
+    HAS_STAGED_CHANGES=true
+    echo "[DEBUG] new-inner-loop.sh: Staged changes detected (in-flight work)"
+  else
+    echo "[DEBUG] new-inner-loop.sh: No staged changes detected"
+  fi
+
   # Format the code - if formatting makes changes, add everything, commit, push, and exit
+  # BUT: only auto-commit if there were no staged changes (in-flight work) at the start
   echo "[DEBUG] new-inner-loop.sh: Running biome format..."
   bunx biome format --write .
   echo "[DEBUG] new-inner-loop.sh: Checking for formatting changes..."
   if ! git diff --quiet; then
-    echo "[DEBUG] new-inner-loop.sh: Formatting changes detected, staging and committing..."
-    git add -A
-    git commit -m "chore: fix formatting"
-    echo "[DEBUG] new-inner-loop.sh: Attempting to push formatting commit..."
-    if ! git push; then
-      echo "[DEBUG] new-inner-loop.sh: Push failed, calling claude-wrapper"
-      PUSH_FAIL_PROMPT="i cant run git push, we all push to main, i probably just have to get the last few commits on this branch"
-      "$SCRIPT_DIR/claude-wrapper.sh" "$PUSH_FAIL_PROMPT"
+    if [ "$HAS_STAGED_CHANGES" = "false" ]; then
+      echo "[DEBUG] new-inner-loop.sh: Formatting changes detected, no in-flight work, staging and committing..."
+      git add -A
+      git commit -m "chore: fix formatting"
+      echo "[DEBUG] new-inner-loop.sh: Attempting to push formatting commit..."
+      if ! git push; then
+        echo "[DEBUG] new-inner-loop.sh: Push failed, calling claude-wrapper"
+        PUSH_FAIL_PROMPT="i cant run git push, we all push to main, i probably just have to get the last few commits on this branch"
+        "$SCRIPT_DIR/claude-wrapper.sh" "$PUSH_FAIL_PROMPT"
+        exit 0
+      fi
+      echo "[DEBUG] new-inner-loop.sh: Formatting commit pushed successfully, exiting"
       exit 0
+    else
+      echo "[DEBUG] new-inner-loop.sh: Formatting changes detected but in-flight work exists, skipping auto-commit (downstream will handle)"
     fi
-    echo "[DEBUG] new-inner-loop.sh: Formatting commit pushed successfully, exiting"
-    exit 0
   else
     echo "[DEBUG] new-inner-loop.sh: No formatting changes detected"
   fi
 
   # Lint and fix - if linting makes changes, add everything, commit, push, and exit
+  # BUT: only auto-commit if there were no staged changes (in-flight work) at the start
   echo "[DEBUG] new-inner-loop.sh: Running biome lint..."
   bunx biome lint --unsafe --write .
   echo "[DEBUG] new-inner-loop.sh: Checking for linting changes..."
   if ! git diff --quiet; then
-    echo "[DEBUG] new-inner-loop.sh: Linting changes detected, staging and committing..."
-    git add -A
-    git commit -m "chore: fix linting"
-    echo "[DEBUG] new-inner-loop.sh: Attempting to push linting commit..."
-    if ! git push; then
-      echo "[DEBUG] new-inner-loop.sh: Push failed, calling claude-wrapper"
-      PUSH_FAIL_PROMPT="i cant run git push, we all push to main, i probably just have to get the last few commits on this branch"
-      "$SCRIPT_DIR/claude-wrapper.sh" "$PUSH_FAIL_PROMPT"
+    if [ "$HAS_STAGED_CHANGES" = "false" ]; then
+      echo "[DEBUG] new-inner-loop.sh: Linting changes detected, no in-flight work, staging and committing..."
+      git add -A
+      git commit -m "chore: fix linting"
+      echo "[DEBUG] new-inner-loop.sh: Attempting to push linting commit..."
+      if ! git push; then
+        echo "[DEBUG] new-inner-loop.sh: Push failed, calling claude-wrapper"
+        PUSH_FAIL_PROMPT="i cant run git push, we all push to main, i probably just have to get the last few commits on this branch"
+        "$SCRIPT_DIR/claude-wrapper.sh" "$PUSH_FAIL_PROMPT"
+        exit 0
+      fi
+      echo "[DEBUG] new-inner-loop.sh: Linting commit pushed successfully, exiting"
       exit 0
+    else
+      echo "[DEBUG] new-inner-loop.sh: Linting changes detected but in-flight work exists, skipping auto-commit (downstream will handle)"
     fi
-    echo "[DEBUG] new-inner-loop.sh: Linting commit pushed successfully, exiting"
-    exit 0
   else
     echo "[DEBUG] new-inner-loop.sh: No linting changes detected"
   fi
@@ -117,7 +137,7 @@ main() {
   echo "[DEBUG] new-inner-loop.sh: Running e2e tests..."
   if ! bun run test:e2e; then
     echo "[DEBUG] new-inner-loop.sh: E2E tests failed, loading e2e-troubleshooting.md and calling claude-wrapper"
-    FIX_E2E_PROMPT="$(cat "$PROMPTS_DIR/dev/e2e-troubleshooting.md")"
+    FIX_E2E_PROMPT="the end to end tests are failing, you must fix them. here is the troubleshooting guide: $(cat "$PROMPTS_DIR/dev/e2e-troubleshooting.md")"
     echo "[DEBUG] new-inner-loop.sh: Prompt loaded, length=${#FIX_E2E_PROMPT} chars"
     "$SCRIPT_DIR/claude-wrapper.sh" "$FIX_E2E_PROMPT"
     echo "[DEBUG] new-inner-loop.sh: claude-wrapper completed, exiting"
