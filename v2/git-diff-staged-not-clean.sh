@@ -6,7 +6,11 @@
 # It composes a prompt to continue working on the current ticket.
 # Note: Preflight checks (formatting, linting, tests) are handled in new-inner-loop.sh
 
-set -euo pipefail
+# Enable alias expansion in non-interactive shell
+shopt -s expand_aliases
+
+# Source no-guard-bashrc.sh to give node bun bla bla all tools to claude as well as to get the claude alias
+[ -f ~/.no-guard-bashrc.sh ] && source ~/.no-guard-bashrc.sh
 
 # Debug: Script start
 echo "[DEBUG] git-diff-staged-not-clean.sh: Starting"
