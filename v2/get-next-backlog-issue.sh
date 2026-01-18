@@ -61,10 +61,86 @@ ISSUES=$(gh issue list \
   2>/dev/null || echo '[]')
 
 if [[ "$ISSUES" == "[]" ]] || [[ -z "$ISSUES" ]]; then
+  # No open tickets - find the most recently completed PRD from closed tickets
+  echo "[DEBUG] get-next-backlog-issue.sh: No open tickets, finding most recently completed PRD..." >&2
+  
+  CLOSED_ISSUES=$(gh issue list \
+    --repo "$REPO_FULL" \
+    --state closed \
+    --limit 10000 \
+    --json number,title \
+    2>/dev/null || echo '[]')
+  
+  echo "[DEBUG] get-next-backlog-issue.sh: Repo: $REPO_FULL" >&2
+  echo "[DEBUG] get-next-backlog-issue.sh: Closed issues count: $(echo "$CLOSED_ISSUES" | jq 'length')" >&2
+  
+  MOST_RECENT_PRD_NUMBER=""
+  MOST_RECENT_PRD_FILE=""
+  
+  if [[ "$CLOSED_ISSUES" != "[]" ]] && [[ -n "$CLOSED_ISSUES" ]]; then
+    echo "[DEBUG] get-next-backlog-issue.sh: Found closed issues, extracting PRD numbers..." >&2
+    # Extract PRD numbers from closed ticket titles and find the highest one
+    PRD_NUMBERS=$(echo "$CLOSED_ISSUES" | jq -r '
+      .[] |
+      select(.title | test("\\[PRD-\\d+-TICKET-\\d+\\]")) |
+      .title | capture("\\[PRD-(?<prd>\\d+)-TICKET-\\d+\\]") | .prd | tonumber
+    ' 2>/dev/null || echo "")
+    
+    if [[ -z "$PRD_NUMBERS" ]] || [[ "$PRD_NUMBERS" == "" ]]; then
+      echo "[DEBUG] get-next-backlog-issue.sh: No PRD tags found in closed tickets" >&2
+    else
+      echo "[DEBUG] get-next-backlog-issue.sh: PRD numbers found: $(echo "$PRD_NUMBERS" | tr '\n' ' ')" >&2
+      
+      HIGHEST_PRD=$(echo "$PRD_NUMBERS" | sort -rn | head -1)
+      
+      echo "[DEBUG] get-next-backlog-issue.sh: Highest PRD found: '$HIGHEST_PRD'" >&2
+      
+      if [[ -n "$HIGHEST_PRD" ]] && [[ "$HIGHEST_PRD" != "null" ]] && [[ "$HIGHEST_PRD" != "" ]] && [[ "$HIGHEST_PRD" =~ ^[0-9]+$ ]]; then
+        # Format as 4-digit zero-padded number
+        PRD_NUMBER=$(printf "%04d" "$HIGHEST_PRD")
+        MOST_RECENT_PRD_NUMBER="$PRD_NUMBER"
+        
+        # Look for the PRD file (optional - we return PRD number even if file doesn't exist)
+        if [[ -d "./prd" ]]; then
+          PRD_FILE=$(find ./prd -name "${PRD_NUMBER}-*.md" -type f 2>/dev/null | head -1)
+          if [[ -n "$PRD_FILE" ]] && [[ -f "$PRD_FILE" ]]; then
+            MOST_RECENT_PRD_FILE="$PRD_FILE"
+            echo "[DEBUG] get-next-backlog-issue.sh: Found PRD file: $PRD_FILE" >&2
+          else
+            echo "[DEBUG] get-next-backlog-issue.sh: PRD file not found for PRD-$PRD_NUMBER (will return PRD number only)" >&2
+          fi
+        else
+          echo "[DEBUG] get-next-backlog-issue.sh: ./prd/ directory does not exist (will return PRD number only)" >&2
+        fi
+      fi
+    fi
+  fi
+  
   if [[ "$JSON_OUTPUT" == "true" ]]; then
-    echo "{}"
+    if [[ -n "$MOST_RECENT_PRD_NUMBER" ]]; then
+      # Return JSON with most recently completed PRD info
+      jq -n \
+        --arg prd_number "$MOST_RECENT_PRD_NUMBER" \
+        --arg prd_file "$MOST_RECENT_PRD_FILE" \
+        '{
+          mostRecentCompletedPRD: {
+            number: $prd_number,
+            file: $prd_file
+          }
+        }'
+    else
+      echo "{}"
+    fi
   else
-    echo -e "${DIM}No open issues found${RESET}"
+    if [[ -n "$MOST_RECENT_PRD_NUMBER" ]]; then
+      echo -e "${DIM}No open issues found${RESET}"
+      echo -e "${DIM}Most recently completed PRD: PRD-${MOST_RECENT_PRD_NUMBER}${RESET}"
+      if [[ -n "$MOST_RECENT_PRD_FILE" ]]; then
+        echo -e "${DIM}PRD file: ${MOST_RECENT_PRD_FILE}${RESET}"
+      fi
+    else
+      echo -e "${DIM}No open issues found${RESET}"
+    fi
   fi
   exit 0
 fi

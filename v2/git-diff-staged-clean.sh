@@ -87,6 +87,20 @@ if [[ -n "$NEXT_TICKET_JSON" ]] && [[ "$NEXT_TICKET_JSON" != "{}" ]] && [[ "$(ec
 else
   echo "[DEBUG] git-diff-staged-clean.sh: No tickets found, composing PRD/ERD creation prompt..."
   
+  # Get most recently completed PRD from get-next-backlog-issue.sh
+  NEXT_TICKET_JSON=$("$SCRIPT_DIR/get-next-backlog-issue.sh" --json)
+  MOST_RECENT_PRD=""
+  
+  # Extract PRD file path from JSON if available
+  PRD_FILE=$(echo "$NEXT_TICKET_JSON" | jq -r '.mostRecentCompletedPRD.file // empty' 2>/dev/null || echo "")
+  if [[ -n "$PRD_FILE" ]] && [[ "$PRD_FILE" != "null" ]] && [[ -f "$PRD_FILE" ]]; then
+    MOST_RECENT_PRD="$PRD_FILE"
+    PRD_NUMBER=$(echo "$NEXT_TICKET_JSON" | jq -r '.mostRecentCompletedPRD.number // empty' 2>/dev/null || echo "")
+    echo "[DEBUG] git-diff-staged-clean.sh: Found most recently completed PRD: PRD-$PRD_NUMBER at $PRD_FILE"
+  else
+    echo "[DEBUG] git-diff-staged-clean.sh: No completed PRD found"
+  fi
+  
   # Compose prompt for creating PRD/ERD
   COMPOSED_PROMPT=$({
     # Reference what-is-a-promptgram
@@ -97,6 +111,17 @@ else
     echo ""
     echo "There are no tickets in the backlog."
     echo ""
+    
+    # Include the most recently completed PRD if found
+    if [[ -n "$MOST_RECENT_PRD" ]] && [[ -f "$MOST_RECENT_PRD" ]]; then
+      echo "Here is the most recently completed PRD for context:"
+      echo ""
+      cat "$MOST_RECENT_PRD"
+      echo ""
+      echo "Use this, and the backlog, as a reference when creating the next PRD. The next PRD should build upon or extend the work completed in this PRD."
+      echo ""
+    fi
+    
     echo "Read the roadmap ref [roadmap]"
     cat "$PROMPTS_DIR/roadmap/roadmap.md"
     echo ""
